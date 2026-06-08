@@ -15,6 +15,9 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
+    packing: '',
+    cases: '',
+    casePrice: '',
     quantity: '',
     cost: '',
     lineTotal: ''
@@ -33,8 +36,24 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
     setCurrentItem(prev => {
       const updated = { ...prev, [field]: value };
       
-      // Auto-calculate lineTotal if quantity or cost changes
-      if (field === 'quantity' || field === 'cost') {
+      // Calculate quantity from cases × packing
+      if (field === 'cases' || field === 'packing') {
+        const cases = parseFloat(updated.cases) || 0;
+        const packing = parseFloat(updated.packing) || 0;
+        updated.quantity = cases * packing;
+      }
+      
+      // If case price is provided, calculate cost per shell
+      if (field === 'casePrice' || field === 'packing') {
+        const casePrice = parseFloat(updated.casePrice) || 0;
+        const packing = parseFloat(updated.packing) || 0;
+        if (casePrice > 0 && packing > 0) {
+          updated.cost = (casePrice / packing).toFixed(4);
+        }
+      }
+      
+      // Auto-calculate lineTotal
+      if (field === 'quantity' || field === 'cost' || field === 'casePrice' || field === 'cases' || field === 'packing') {
         const qty = parseFloat(updated.quantity) || 0;
         const cost = parseFloat(updated.cost) || 0;
         updated.lineTotal = (qty * cost).toFixed(2);
@@ -45,14 +64,15 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
   };
 
   const addItem = () => {
-    if (!currentItem.partNumber || !currentItem.description || !currentItem.quantity || !currentItem.cost) {
-      setError('Please fill in all item fields');
+    if (!currentItem.partNumber || !currentItem.description || !currentItem.quantity || !currentItem.lineTotal) {
+      setError('Please fill in part number, description, and either (cases + packing + case price) or (quantity + cost per shell)');
       return;
     }
 
     const newItem = {
       partNumber: currentItem.partNumber,
       description: currentItem.description,
+      packing: currentItem.packing || null,
       quantity: parseInt(currentItem.quantity),
       cost: parseFloat(currentItem.cost),
       lineTotal: parseFloat(currentItem.lineTotal)
@@ -64,6 +84,9 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
     setCurrentItem({
       partNumber: '',
       description: '',
+      packing: '',
+      cases: '',
+      casePrice: '',
       quantity: '',
       cost: '',
       lineTotal: ''
@@ -224,37 +247,75 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
                   placeholder="5 inch shell"
                 />
               </div>
-            </div>
-            <div className="form-row">
               <div className="form-group">
-                <label>Quantity (shells) *</label>
+                <label>Packing</label>
                 <input
                   type="number"
-                  value={currentItem.quantity}
-                  onChange={(e) => handleItemChange('quantity', e.target.value)}
-                  placeholder="18"
+                  value={currentItem.packing}
+                  onChange={(e) => handleItemChange('packing', e.target.value)}
+                  placeholder="e.g., 18"
                   min="1"
                 />
               </div>
+            </div>
+            
+            <div className="form-row">
               <div className="form-group">
-                <label>Cost per Shell *</label>
+                <label>Cases</label>
+                <input
+                  type="number"
+                  value={currentItem.cases}
+                  onChange={(e) => handleItemChange('cases', e.target.value)}
+                  placeholder="e.g., 2"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="form-group">
+                <label>Case Price</label>
                 <input
                   type="number"
                   step="0.01"
-                  value={currentItem.cost}
-                  onChange={(e) => handleItemChange('cost', e.target.value)}
-                  placeholder="14.11"
+                  value={currentItem.casePrice}
+                  onChange={(e) => handleItemChange('casePrice', e.target.value)}
+                  placeholder="e.g., 254.00"
                   min="0"
                 />
               </div>
               <div className="form-group">
-                <label>Line Total</label>
+                <label>Quantity (total shells) *</label>
+                <input
+                  type="number"
+                  value={currentItem.quantity}
+                  onChange={(e) => handleItemChange('quantity', e.target.value)}
+                  placeholder="Auto-calculated or enter"
+                  min="1"
+                  disabled={currentItem.cases && currentItem.packing}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label>Cost per Shell</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={currentItem.cost}
+                  onChange={(e) => handleItemChange('cost', e.target.value)}
+                  placeholder="Auto-calculated or enter"
+                  min="0"
+                  disabled={currentItem.casePrice && currentItem.packing}
+                />
+              </div>
+              <div className="form-group">
+                <label>Line Total *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={currentItem.lineTotal}
                   onChange={(e) => handleItemChange('lineTotal', e.target.value)}
-                  placeholder="0.00"
+                  placeholder="Auto-calculated"
                   min="0"
                 />
               </div>
@@ -275,8 +336,9 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
                   <tr>
                     <th>Part Number</th>
                     <th>Description</th>
+                    <th>Packing</th>
                     <th>Qty</th>
-                    <th>Cost</th>
+                    <th>Cost/Shell</th>
                     <th>Line Total</th>
                     <th></th>
                   </tr>
@@ -286,8 +348,9 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
                     <tr key={index}>
                       <td>{item.partNumber}</td>
                       <td>{item.description}</td>
+                      <td>{item.packing || '-'}</td>
                       <td>{item.quantity}</td>
-                      <td>${item.cost.toFixed(2)}</td>
+                      <td>${item.cost.toFixed(4)}</td>
                       <td>${item.lineTotal.toFixed(2)}</td>
                       <td>
                         <button 
