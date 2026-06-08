@@ -62,27 +62,31 @@ export async function parseWisleyPDF(pdfPath) {
       if (!inDataSection) continue;
       
       // Try to parse as product line (will return null for non-product lines)
-      const item = parseWisleyLine(line);
-      if (item) {
-        // Check if next lines are continuation (start with lots of whitespace)
-        let nextLineIdx = i + 1;
-        while (nextLineIdx < lines.length) {
-          const nextLine = lines[nextLineIdx];
-          // Continuation lines have significant leading whitespace (10+) 
-          // and don't start with a part number at the beginning
-          const hasManySpaces = nextLine.match(/^\s{10,}/);
-          const startsWithPartNum = nextLine.match(/^[A-Z0-9][-A-Z0-9_]+/i);
-          
-          if (hasManySpaces && !startsWithPartNum) {
-            const continuation = nextLine.trim();
-            if (continuation) {
-              item.description += ' ' + continuation;
-            }
-            nextLineIdx++;
-          } else {
-            break;
+      let fullLine = line;
+      
+      // Check if next lines are continuation (start with lots of whitespace)
+      let nextLineIdx = i + 1;
+      while (nextLineIdx < lines.length) {
+        const nextLine = lines[nextLineIdx];
+        // Continuation lines have significant leading whitespace (10+) 
+        // and don't start with a part number at the beginning
+        const hasManySpaces = nextLine.match(/^\s{10,}/);
+        const startsWithPartNum = nextLine.match(/^[A-Z0-9][-A-Z0-9_]+/i);
+        
+        if (hasManySpaces && !startsWithPartNum) {
+          const continuation = nextLine.trim();
+          if (continuation) {
+            fullLine += ' ' + continuation;
           }
+          i = nextLineIdx; // Skip this line in the outer loop
+          nextLineIdx++;
+        } else {
+          break;
         }
+      }
+      
+      const item = parseWisleyLine(fullLine);
+      if (item) {
         items.push(item);
       }
     }
@@ -172,15 +176,14 @@ function parseWisleyLine(line) {
   // Remove trailing dash if present
   description = description.replace(/\s*-\s*$/, '').trim();
   
-  // Calculate totals
+  // Calculate cost per shell
   const totalPacking = itemsPerCase * casesPerUnit;
-  const totalQuantity = casesOrdered * totalPacking;
-  const costPerItem = totalPacking > 0 ? pricePerCase / totalPacking : pricePerCase;
+  const costPerShell = totalPacking > 0 ? pricePerCase / totalPacking : pricePerCase;
   
   return {
     partNumber,
     description,
-    quantity: totalQuantity,
-    cost: parseFloat(costPerItem.toFixed(2))
+    quantity: casesOrdered,  // Quantity is number of CASES
+    cost: parseFloat(costPerShell.toFixed(2))  // Cost is per SHELL
   };
 }
