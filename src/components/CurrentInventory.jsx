@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import './CurrentInventory.css';
 
-function CurrentInventory({ inventory, shows }) {
+function CurrentInventory({ inventory, shows, orders }) {
   // Calculate current inventory with FIFO costing
   const currentInventory = useMemo(() => {
     // First, calculate how much of each product has been used in shows
@@ -83,6 +83,104 @@ function CurrentInventory({ inventory, shows }) {
     return `$${value.toFixed(2)}`;
   };
 
+  // Export all unique products from all orders (Inventory Export)
+  const exportInventoryCSV = () => {
+    // Get all unique products from inventory
+    const productMap = {};
+    
+    inventory.forEach(item => {
+      if (!productMap[item.partNumber]) {
+        productMap[item.partNumber] = {
+          partNumber: item.partNumber,
+          description: item.description,
+          // Determine partType based on description keywords
+          partType: guessPartType(item.description),
+          // Extract size if present
+          size: extractSize(item.description),
+          // Use average cost across all orders
+          costs: [],
+          manufacturer: 'Wisley' // Default, could be enhanced to detect from order data
+        };
+      }
+      productMap[item.partNumber].costs.push(item.cost);
+    });
+
+    // Calculate average cost for each product
+    const products = Object.values(productMap).map(product => ({
+      ...product,
+      stdPrice: product.costs.reduce((sum, c) => sum + c, 0) / product.costs.length
+    }));
+
+    // Generate CSV
+    const headers = ['partNumber', 'description', 'partType', 'size', 'stdPrice', 'manufacturer'];
+    const csvRows = [headers.join(',')];
+
+    products.forEach(product => {
+      const row = [
+        product.partNumber,
+        `"${product.description.replace(/"/g, '""')}"`, // Escape quotes
+        product.partType,
+        product.size || '',
+        `$${product.stdPrice.toFixed(2)}`,
+        product.manufacturer
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    downloadCSV(csvRows.join('\n'), 'finale3d_inventory_export.csv');
+  };
+
+  // Export current available inventory as quotas (Quota Export)
+  const exportQuotaCSV = () => {
+    const headers = ['partNumber', 'quota'];
+    const csvRows = [headers.join(',')];
+
+    currentInventory.forEach(item => {
+      if (item.available > 0) {
+        csvRows.push(`${item.partNumber},${item.available}`);
+      }
+    });
+
+    downloadCSV(csvRows.join('\n'), 'finale3d_quota_export.csv');
+  };
+
+  // Helper: Guess part type from description
+  const guessPartType = (description) => {
+    const desc = description.toLowerCase();
+    if (desc.includes('cake') || desc.includes('shot')) return 'cake';
+    if (desc.includes('shell')) return 'shell';
+    if (desc.includes('candle')) return 'candle';
+    if (desc.includes('mine')) return 'mine';
+    if (desc.includes('comet')) return 'comet';
+    if (desc.includes('rocket')) return 'rocket';
+    if (desc.includes('fountain') || desc.includes('gerb')) return 'ground';
+    return 'other_effect';
+  };
+
+  // Helper: Extract size from description
+  const extractSize = (description) => {
+    // Look for patterns like: 5", 3", 75mm, 30mm, 20mm
+    const sizeMatch = description.match(/(\d+(?:\.\d+)?)\s*["']|(\d+)\s*mm/i);
+    if (sizeMatch) {
+      if (sizeMatch[1]) return `${sizeMatch[1]}"`;
+      if (sizeMatch[2]) return `${sizeMatch[2]}mm`;
+    }
+    return '';
+  };
+
+  // Helper: Download CSV file
+  const downloadCSV = (content, filename) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Calculate totals
   const totals = useMemo(() => {
     return currentInventory.reduce((acc, item) => ({
@@ -101,18 +199,29 @@ function CurrentInventory({ inventory, shows }) {
 
   return (
     <div className="current-inventory-container">
-      <div className="current-inventory-summary">
-        <div className="summary-stat">
-          <span className="stat-label">Unique Products:</span>
-          <span className="stat-value">{currentInventory.length}</span>
+      <div className="current-inventory-header">
+        <div className="current-inventory-summary">
+          <div className="summary-stat">
+            <span className="stat-label">Unique Products:</span>
+            <span className="stat-value">{currentInventory.length}</span>
+          </div>
+          <div className="summary-stat">
+            <span className="stat-label">Available Items:</span>
+            <span className="stat-value">{totals.available}</span>
+          </div>
+          <div className="summary-stat">
+            <span className="stat-label">Total Value:</span>
+            <span className="stat-value">{formatCurrency(totals.value)}</span>
+          </div>
         </div>
-        <div className="summary-stat">
-          <span className="stat-label">Available Items:</span>
-          <span className="stat-value">{totals.available}</span>
-        </div>
-        <div className="summary-stat">
-          <span className="stat-label">Total Value:</span>
-          <span className="stat-value">{formatCurrency(totals.value)}</span>
+        
+        <div className="export-buttons">
+          <button onClick={exportInventoryCSV} className="btn-export" title="Export all products for Finale 3D inventory import">
+            📦 Export Inventory
+          </button>
+          <button onClick={exportQuotaCSV} className="btn-export" title="Export available quantities for Finale 3D quota import">
+            📊 Export Quotas
+          </button>
         </div>
       </div>
 

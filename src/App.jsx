@@ -12,7 +12,6 @@ import ShowDetailsTable from './components/ShowDetailsTable';
 import FileUpload from './components/FileUpload';
 import AddItemModal from './components/AddItemModal';
 import AddOrderModal from './components/AddOrderModal';
-import OrdersDebugPanel from './components/OrdersDebugPanel';
 import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './App.css';
@@ -340,6 +339,7 @@ function App() {
           <CurrentInventory
             inventory={inventory}
             shows={shows}
+            orders={orders}
           />
         )}
 
@@ -430,8 +430,6 @@ function App() {
         onAdd={addOrder}
         existingOrders={orders}
       />
-
-      <OrdersDebugPanel />
     </div>
   );
 }
