@@ -272,13 +272,17 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     
     // If we have manual packing edits, recalculate cost per shell
     if (packingEdits[item.partNumber] && packing.total) {
-      return item.cost / packing.total; // item.cost is per case for items that needed packing
+      // For items that needed packing, item.cost is already per-unit from invoice
+      return item.cost;
     }
     // If item already has cost calculated (has packing), use it
     if (item.quantity !== null && !item.needsPacking) {
       return item.cost; // Already cost per shell
     }
-    // For items missing packing, cost is still per case
+    // For items missing packing, show the unit price from invoice
+    if (item.needsPacking) {
+      return item.cost; // Already unit price from invoice
+    }
     return null;
   };
 

@@ -216,13 +216,20 @@ function parseWisleyLine(originalLine, fullLine = null) {
   const invoiceLineTotal = parseFloat(lineTotal.toFixed(2)); // Exact line total from invoice
   
   // Calculate cost per shell from line total (not rounded, to maintain accuracy)
-  const costPerShell = totalShells > 0 ? invoiceLineTotal / totalShells : invoiceLineTotal;
+  let costPerShell;
+  if (totalShells > 0) {
+    // Has packing: calculate cost per shell from line total
+    costPerShell = invoiceLineTotal / totalShells;
+  } else {
+    // No packing: use unit price from invoice (pricePerCase is actually unit price)
+    costPerShell = pricePerCase;
+  }
   
   return {
     partNumber,
     description,
     quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
-    cost: costPerShell,  // Cost per shell calculated from lineTotal
+    cost: costPerShell,  // Cost per shell (from calculation if has packing, or unit price if no packing)
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
     cases: casesOrdered,  // Number of cases ordered (always set, even if packing unknown)
     packing: hasPacking ? totalPacking : null,  // Total items per case (packagesPerCase × itemsPerPackage)
