@@ -64,7 +64,6 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           <thead>
             <tr>
               {!orderNumber && <th>Order #</th>}
-              <th>Order Date</th>
               <th>Packing</th>
               <th>Quantity</th>
               <th>Cost/Unit</th>
@@ -83,7 +82,6 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                     </span>
                   </td>
                 )}
-                <td>{formatDate(item.orderDate)}</td>
                 <td>
                   {item.cases && item.packing 
                     ? `${item.cases}/${item.packing}` 
@@ -110,7 +108,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan={orderNumber ? 2 : 3}><strong>TOTALS</strong></td>
+              <td colSpan={orderNumber ? 1 : 2}><strong>TOTALS</strong></td>
               <td><strong>{totalQuantity}</strong></td>
               <td><strong>{formatCurrency(avgCost)}</strong></td>
               <td><strong>{formatCurrency(totalValue)}</strong></td>
