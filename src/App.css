@@ -74,7 +74,7 @@ body {
 
 .btn-secondary,
 .import-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: #6c757d;
   color: white;
   display: inline-flex;
   align-items: center;
@@ -82,7 +82,7 @@ body {
 
 .btn-secondary:hover,
 .import-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #5a6268;
 }
 
 .btn-danger {
