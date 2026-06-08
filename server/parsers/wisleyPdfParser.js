@@ -26,25 +26,25 @@ export async function parseWisleyPDF(pdfPath) {
       // Skip empty lines
       if (!line.trim()) continue;
       
-      // Extract order number
+      // Extract order number (anywhere in document)
       const orderMatch = line.match(/ORDER NUMBER:\s*(\S+)/i) || line.match(/SALE NUMBER:\s*(\S+)/i);
       if (orderMatch) {
         orderInfo.orderNumber = orderMatch[1];
       }
       
-      // Extract subtotal (must be at end of line with colon)
+      // Extract subtotal (anywhere in document)
       if (line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i)) {
         const subtotalMatch = line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i);
         orderInfo.subtotal = parseFloat(subtotalMatch[1].replace(/,/g, ''));
       }
       
-      // Extract discount (can be on separate line)
+      // Extract discount (anywhere in document)
       if (line.match(/Discount:\s*-?\s*([\d,]+\.?\d*)\s*$/i)) {
         const discountMatch = line.match(/Discount:\s*-?\s*([\d,]+\.?\d*)\s*$/i);
         orderInfo.discount = parseFloat(discountMatch[1].replace(/,/g, ''));
       }
       
-      // Extract total (must say "Total:" not "Subtotal:")
+      // Extract total (anywhere in document)
       if (line.includes('Total:') && !line.includes('Subtotal:')) {
         const totalMatch = line.match(/Total:\s*([\d,]+\.?\d*)\s*$/i);
         if (totalMatch) {
@@ -52,16 +52,17 @@ export async function parseWisleyPDF(pdfPath) {
         }
       }
       
-      // Look for the header row
+      // Look for the header row to start data section
       if (line.includes('Product ID') && line.includes('Description')) {
         inDataSection = true;
         continue;
       }
       
-      // Skip non-data lines
+      // Skip non-data lines (continue to next line for order info extraction)
       if (!inDataSection) continue;
       
       // Try to parse as product line (will return null for non-product lines)
+      let originalLine = line;  // Keep the original line for extracting qty/price
       let fullLine = line;
       
       // Check if next lines are continuation (start with lots of whitespace)
@@ -70,10 +71,12 @@ export async function parseWisleyPDF(pdfPath) {
         const nextLine = lines[nextLineIdx];
         // Continuation lines have significant leading whitespace (10+) 
         // and don't start with a part number at the beginning
+        // BUT stop if we hit order summary lines (Subtotal, Discount, Total)
         const hasManySpaces = nextLine.match(/^\s{10,}/);
         const startsWithPartNum = nextLine.match(/^[A-Z0-9][-A-Z0-9_]+/i);
+        const isOrderSummary = nextLine.match(/Subtotal:|Discount:|Total:/i);
         
-        if (hasManySpaces && !startsWithPartNum) {
+        if (hasManySpaces && !startsWithPartNum && !isOrderSummary) {
           const continuation = nextLine.trim();
           if (continuation) {
             fullLine += ' ' + continuation;
@@ -85,7 +88,7 @@ export async function parseWisleyPDF(pdfPath) {
         }
       }
       
-      const item = parseWisleyLine(fullLine);
+      const item = parseWisleyLine(originalLine, fullLine);
       if (item) {
         items.push(item);
       }
@@ -102,15 +105,18 @@ export async function parseWisleyPDF(pdfPath) {
   }
 }
 
-function parseWisleyLine(line) {
+function parseWisleyLine(originalLine, fullLine = null) {
+  // Use fullLine for packing/description, originalLine for qty/price
+  const lineForParsing = fullLine || originalLine;
+  
   // Skip empty or non-product lines
-  const trimmed = line.trim();
+  const trimmed = lineForParsing.trim();
   if (!trimmed || trimmed.length < 20) {
     return null;
   }
   
   // Skip continuation lines (they start with significant whitespace)
-  if (line.match(/^\s{10,}/)) {
+  if (originalLine.match(/^\s{10,}/)) {
     return null;
   }
   
@@ -122,23 +128,30 @@ function parseWisleyLine(line) {
   
   const partNumber = partNumberMatch[1].trim();
   
-  // Get everything after the part number
-  const afterPartNum = line.substring(line.indexOf(partNumber) + partNumber.length);
+  // Get everything after the part number FROM THE FULL LINE (for packing)
+  const afterPartNumFull = lineForParsing.substring(lineForParsing.indexOf(partNumber) + partNumber.length);
   
-  // Extract packing from the line (X/Y format) and remove it
-  const packingMatch = afterPartNum.match(/(\d+)\/(\d+)/);
+  // Get everything after the part number FROM THE ORIGINAL LINE (for qty/price)
+  const afterPartNumOriginal = originalLine.substring(originalLine.indexOf(partNumber) + partNumber.length);
+  
+  // Extract packing from the FULL line (may be in continuation)
+  const packingMatch = afterPartNumFull.match(/(\d+)\/(\d+)/);
   let itemsPerCase = 1;
   let casesPerUnit = 1;
-  let afterPartNumNoPacking = afterPartNum;
   
   if (packingMatch) {
     itemsPerCase = parseInt(packingMatch[1]);
     casesPerUnit = parseInt(packingMatch[2]);
-    // Remove the packing pattern from the string before extracting numbers
-    afterPartNumNoPacking = afterPartNum.replace(/\d+\/\d+/, '');
   }
   
-  // Extract all numbers (including decimals) from the rest of the line (after removing packing)
+  // Extract numbers from ORIGINAL line only (not continuation) for qty/price
+  let afterPartNumNoPacking = afterPartNumOriginal;
+  if (packingMatch && afterPartNumOriginal.includes(packingMatch[0])) {
+    // Only remove packing if it's in the original line
+    afterPartNumNoPacking = afterPartNumOriginal.replace(/\d+\/\d+/, '');
+  }
+  
+  // Extract all numbers from ORIGINAL LINE
   const allNumbers = afterPartNumNoPacking.match(/\d+(?:\.\d+)?/g);
   if (!allNumbers || allNumbers.length < 2) {
     return null; // Need at least quantity and price
@@ -151,9 +164,6 @@ function parseWisleyLine(line) {
   }
   
   // The last 2-3 numbers should be: quantity, unit_price, subtotal
-  // If length is 2, it's: quantity, price
-  // If length is 3+, it's likely: ..., quantity, unit_price, subtotal
-  
   let casesOrdered, pricePerCase;
   
   if (dataNumbers.length === 2) {
@@ -165,25 +175,41 @@ function parseWisleyLine(line) {
     pricePerCase = dataNumbers[dataNumbers.length - 2];
   }
   
-  // Extract description - everything before the numbers, minus the packing
-  let description = afterPartNum;
+  // Extract description from FULL LINE
+  let description = afterPartNumFull;
+  
   // Remove packing notation
   if (packingMatch) {
     description = description.replace(/\s*-?\s*\d+\/\d+/, '');
   }
-  // Remove all trailing numbers (quantity, prices)
-  description = description.replace(/[\d\s.]+$/, '').trim();
-  // Remove trailing dash if present
-  description = description.replace(/\s*-\s*$/, '').trim();
   
-  // Calculate cost per shell
+  // Try to find the start of the quantity/price section
+  const priceDataPattern = /\s+(\d+)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)(?=\s|$)/;
+  const priceMatch = description.match(priceDataPattern);
+  
+  if (priceMatch) {
+    // Remove everything from the price data onward
+    description = description.substring(0, priceMatch.index);
+  }
+  
+  // Clean up trailing whitespace and dashes
+  description = description.trim().replace(/\s*-\s*$/, '').trim();
+  
+  // Calculate total shells and cost per shell
   const totalPacking = itemsPerCase * casesPerUnit;
+  const hasPacking = packingMatch !== null;
+  const totalShells = hasPacking ? casesOrdered * totalPacking : null; // null if packing unknown
   const costPerShell = totalPacking > 0 ? pricePerCase / totalPacking : pricePerCase;
   
   return {
     partNumber,
     description,
-    quantity: casesOrdered,  // Quantity is number of CASES
-    cost: parseFloat(costPerShell.toFixed(2))  // Cost is per SHELL
+    quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
+    cost: hasPacking ? parseFloat(costPerShell.toFixed(2)) : pricePerCase,  // Cost per shell or per case
+    packing: hasPacking ? `${itemsPerCase}/${casesPerUnit}` : null,
+    itemsPerCase: hasPacking ? itemsPerCase : null,
+    casesPerUnit: hasPacking ? casesPerUnit : null,
+    casesOrdered: casesOrdered,  // Store original cases for reference
+    needsPacking: !hasPacking  // Flag for items that need manual packing entry
   };
 }

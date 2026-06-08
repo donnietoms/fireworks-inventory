@@ -14,6 +14,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
   const [detectedVendor, setDetectedVendor] = useState(null);
   const [needsVendorSelection, setNeedsVendorSelection] = useState(false);
   const [previewVendor, setPreviewVendor] = useState(null); // Vendor selected in preview
+  const [packingEdits, setPackingEdits] = useState({}); // Store packing edits: { partNumber: { itemsPerCase, casesPerUnit } }
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
@@ -131,6 +132,34 @@ const FileUpload = ({ type, onUpload, disabled }) => {
 
   const handleConfirm = () => {
     if (preview) {
+      // Apply packing edits to items before uploading
+      const updatedItems = preview.items.map(item => {
+        if (packingEdits[item.partNumber]) {
+          const { itemsPerCase, casesPerUnit } = packingEdits[item.partNumber];
+          const totalPacking = itemsPerCase * casesPerUnit;
+          const totalShells = item.casesOrdered * totalPacking;
+          const costPerShell = item.cost / totalPacking; // item.cost is currently per case for missing packing
+          
+          return {
+            ...item,
+            packing: `${itemsPerCase}/${casesPerUnit}`,
+            itemsPerCase,
+            casesPerUnit,
+            quantity: totalShells,
+            cost: parseFloat(costPerShell.toFixed(2)),
+            needsPacking: false
+          };
+        }
+        return item;
+      });
+      
+      // Check if any items still need packing
+      const stillNeedPacking = updatedItems.filter(i => i.needsPacking);
+      if (stillNeedPacking.length > 0) {
+        alert(`Please enter packing format for all items:\n${stillNeedPacking.map(i => i.partNumber).join(', ')}`);
+        return;
+      }
+      
       // Pass order info if it's an invoice upload
       const orderInfo = isInvoice && preview.orderInfo ? {
         vendor: preview.vendor,
@@ -141,7 +170,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         savedFileName: preview.savedFileName // Include saved filename
       } : null;
       
-      const warnings = onUpload(preview.items, preview.fileName, orderInfo);
+      const warnings = onUpload(updatedItems, preview.fileName, orderInfo);
       
       if (warnings && warnings.length > 0) {
         const warningMessages = warnings.map(w => 
@@ -154,12 +183,14 @@ const FileUpload = ({ type, onUpload, disabled }) => {
       
       setPreview(null);
       setPreviewVendor(null);
+      setPackingEdits({});
     }
   };
 
   const handleCancel = () => {
     setPreview(null);
     setPreviewVendor(null);
+    setPackingEdits({});
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -175,8 +206,58 @@ const FileUpload = ({ type, onUpload, disabled }) => {
     if (confirm(`Re-parse file as ${vendors.find(v => v.id === newVendor)?.name || newVendor}?`)) {
       setPreview(null);
       setPreviewVendor(null);
+      setPackingEdits({});
       await processFile(preview.originalFile, newVendor);
     }
+  };
+
+  const handlePackingChange = (partNumber, field, value) => {
+    setPackingEdits(prev => ({
+      ...prev,
+      [partNumber]: {
+        ...prev[partNumber],
+        [field]: parseInt(value) || 1
+      }
+    }));
+  };
+
+  const getEffectivePacking = (item) => {
+    if (packingEdits[item.partNumber]) {
+      const { itemsPerCase = 1, casesPerUnit = 1 } = packingEdits[item.partNumber];
+      return { itemsPerCase, casesPerUnit, total: itemsPerCase * casesPerUnit };
+    }
+    if (item.packing) {
+      return { 
+        itemsPerCase: item.itemsPerCase, 
+        casesPerUnit: item.casesPerUnit, 
+        total: item.itemsPerCase * item.casesPerUnit 
+      };
+    }
+    return { itemsPerCase: 1, casesPerUnit: 1, total: 1 };
+  };
+
+  const getEffectiveQuantity = (item) => {
+    // If item already has quantity calculated (has packing), use it
+    if (item.quantity !== null && !packingEdits[item.partNumber]) {
+      return item.quantity;
+    }
+    // Otherwise calculate from cases and packing
+    const packing = getEffectivePacking(item);
+    return item.casesOrdered * packing.total;
+  };
+
+  const getEffectiveCost = (item) => {
+    // If we have manual packing edits, recalculate cost per shell
+    if (packingEdits[item.partNumber]) {
+      const packing = getEffectivePacking(item);
+      return item.cost / packing.total; // item.cost is per case for items that needed packing
+    }
+    // If item already has cost calculated (has packing), use it
+    if (item.quantity !== null && !item.needsPacking) {
+      return item.cost; // Already cost per shell
+    }
+    // For items missing packing, cost is still per case
+    return item.cost;
   };
 
   return (
@@ -305,30 +386,76 @@ const FileUpload = ({ type, onUpload, disabled }) => {
             </div>
           )}
           
+          {/* Warning for items missing packing */}
+          {preview.items.some(item => item.needsPacking) && (
+            <div className="packing-warning" style={{
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              padding: '12px',
+              marginBottom: '12px',
+              borderRadius: '4px'
+            }}>
+              <strong>⚠️ Missing Packing Information</strong>
+              <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                {preview.items.filter(i => i.needsPacking).length} item(s) are missing packing format.
+                Enter the packing (e.g., "24/1") in the table below before importing.
+              </p>
+            </div>
+          )}
+          
           <div className="preview-table-wrapper">
             <table className="preview-table">
               <thead>
                 <tr>
                   <th>Part Number</th>
                   <th>Description</th>
-                  <th>Quantity</th>
-                  <th>Cost</th>
+                  <th>Packing (Items/Case)</th>
+                  <th>Quantity (Shells)</th>
+                  <th>Cost/Shell</th>
                 </tr>
               </thead>
               <tbody>
-                {preview.items.slice(0, 10).map((item, idx) => (
-                  <tr key={idx}>
-                    <td>{item.partNumber}</td>
-                    <td>{item.description}</td>
-                    <td>{item.quantity}</td>
-                    <td>${item.cost.toFixed(2)}</td>
-                  </tr>
-                ))}
-                {preview.items.length > 10 && (
-                  <tr className="more-items">
-                    <td colSpan="4">... and {preview.items.length - 10} more items</td>
-                  </tr>
-                )}
+                {preview.items.map((item, idx) => {
+                  const packing = getEffectivePacking(item);
+                  const qty = getEffectiveQuantity(item);
+                  const cost = getEffectiveCost(item);
+                  
+                  return (
+                    <tr key={idx} style={item.needsPacking && !packingEdits[item.partNumber] ? { background: '#fff3cd' } : {}}>
+                      <td>{item.partNumber}</td>
+                      <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.description}
+                      </td>
+                      <td>
+                        {item.needsPacking ? (
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="Items"
+                              value={packingEdits[item.partNumber]?.itemsPerCase || ''}
+                              onChange={(e) => handlePackingChange(item.partNumber, 'itemsPerCase', e.target.value)}
+                              style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
+                            />
+                            <span>/</span>
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="Case"
+                              value={packingEdits[item.partNumber]?.casesPerUnit || ''}
+                              onChange={(e) => handlePackingChange(item.partNumber, 'casesPerUnit', e.target.value)}
+                              style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
+                            />
+                          </div>
+                        ) : (
+                          `${packing.itemsPerCase}/${packing.casesPerUnit}`
+                        )}
+                      </td>
+                      <td>{item.casesOrdered} cases × {packing.total} = {qty} shells</td>
+                      <td>${cost.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
