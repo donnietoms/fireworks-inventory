@@ -285,7 +285,8 @@ function CurrentInventory({ inventory, shows, orders }) {
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan="2"><strong>TOTAL</strong></td>
+              <td><strong>TOTAL</strong></td>
+              <td></td>
               <td className="available-qty"><strong>{totals.available}</strong></td>
               <td></td>
             </tr>

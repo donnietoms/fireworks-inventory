@@ -181,6 +181,12 @@
 .current-inventory-table .totals-row td {
   border-top: 2px solid #333;
   padding-top: 16px;
+  white-space: nowrap;
+  display: table-cell !important;
+}
+
+.current-inventory-table .totals-row {
+  display: table-row !important;
 }
 
 .empty-state {
