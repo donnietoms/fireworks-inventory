@@ -268,9 +268,10 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   };
 
   const getEffectiveCost = (item) => {
+    const packing = getEffectivePacking(item);
+    
     // If we have manual packing edits, recalculate cost per shell
-    if (packingEdits[item.partNumber]) {
-      const packing = getEffectivePacking(item);
+    if (packingEdits[item.partNumber] && packing.total) {
       return item.cost / packing.total; // item.cost is per case for items that needed packing
     }
     // If item already has cost calculated (has packing), use it
@@ -278,7 +279,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       return item.cost; // Already cost per shell
     }
     // For items missing packing, cost is still per case
-    return item.cost;
+    return null;
   };
 
   return (

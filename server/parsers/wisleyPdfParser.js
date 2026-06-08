@@ -224,7 +224,7 @@ function parseWisleyLine(originalLine, fullLine = null) {
     quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
     cost: costPerShell,  // Cost per shell calculated from lineTotal
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
-    cases: hasPacking ? casesOrdered : null,  // Number of cases ordered
+    cases: casesOrdered,  // Number of cases ordered (always set, even if packing unknown)
     packing: hasPacking ? totalPacking : null,  // Total items per case (packagesPerCase × itemsPerPackage)
     packagesPerCase: hasPacking ? packagesPerCase : null,  // Number of packages in a case (X in X/Y)
     itemsPerPackage: hasPacking ? itemsPerPackage : null,  // Number of items per package (Y in X/Y)
