@@ -82,9 +82,9 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                   </td>
                 )}
                 <td>
-                  {item.cases && item.packing 
-                    ? `${item.cases}/${item.packing}` 
-                    : item.packing || '-'}
+                  {item.itemsPerCase && item.casesPerUnit 
+                    ? `${item.itemsPerCase}/${item.casesPerUnit}` 
+                    : '-'}
                 </td>
                 <td>{item.quantity}</td>
                 <td>{formatCurrency(item.cost)}</td>

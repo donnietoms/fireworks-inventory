@@ -35,7 +35,9 @@ export const useInventory = () => {
           cost: newItem.cost,
           lineTotal: newItem.lineTotal, // Store exact line total from invoice
           cases: newItem.cases, // Number of cases
-          packing: newItem.packing, // Shells per case
+          packing: newItem.packing, // Shells per case (total)
+          itemsPerCase: newItem.itemsPerCase, // Items per inner case
+          casesPerUnit: newItem.casesPerUnit, // Inner cases per unit
           orderNumber: orderNumber,
           orderDate: orderDate || new Date().toISOString() // Use provided date or current date
         });
