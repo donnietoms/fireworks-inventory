@@ -34,8 +34,18 @@ app.use(cors({
 app.use(express.json());
 
 // Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: '/tmp/fireworks-uploads/',
+  filename: (req, file, cb) => {
+    // Keep original filename with timestamp prefix
+    const timestamp = Date.now();
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${timestamp}_${safeName}`);
+  }
+});
+
 const upload = multer({
-  dest: '/tmp/fireworks-uploads/',
+  storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
@@ -47,6 +57,40 @@ app.get('/health', (req, res) => {
 // Get supported vendors
 app.get('/api/vendors', (req, res) => {
   res.json({ vendors: getSupportedVendors() });
+});
+
+// Serve saved invoice PDF
+app.get('/api/invoice/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // Sanitize filename to prevent directory traversal
+    const safeName = path.basename(filename);
+    const filePath = path.join('/tmp/fireworks-uploads', safeName);
+    
+    // Check if file exists
+    await fs.access(filePath);
+    
+    // Send file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving invoice:', error);
+    res.status(404).json({ error: 'Invoice file not found' });
+  }
+});
+
+// Delete saved invoice
+app.delete('/api/invoice/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const safeName = path.basename(filename);
+    const filePath = path.join('/tmp/fireworks-uploads', safeName);
+    
+    await fs.unlink(filePath);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting invoice:', error);
+    res.status(500).json({ error: 'Failed to delete invoice file' });
+  }
 });
 
 // PDF upload endpoint
@@ -75,15 +119,15 @@ app.post('/api/parse-pdf', upload.single('file'), async (req, res) => {
     // Parse the PDF using detected/specified vendor
     const result = await parsePDF(filePath, vendor);
     
-    // Clean up uploaded file
-    await fs.unlink(filePath).catch(() => {});
-    
+    // Return result with saved file info (don't delete the file)
     res.json({
       items: result.items || result,
       orderInfo: result.orderInfo || null,
       vendor: vendor,
       detectedVendor: detectedVendor,
-      fileName: req.file.originalname
+      fileName: req.file.originalname,
+      savedFileName: req.file.filename, // Saved filename with timestamp
+      filePath: filePath // Server-side path
     });
     
   } catch (error) {

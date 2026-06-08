@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { API_BASE_URL } from '../config';
 import './OrdersTable.css';
 
 const OrdersTable = ({ orders, onUpdate, onDelete }) => {
@@ -94,6 +95,15 @@ const OrdersTable = ({ orders, onUpdate, onDelete }) => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleViewInvoice = (order) => {
+    if (order.invoiceFile) {
+      // Open invoice in new window
+      window.open(`${API_BASE_URL}/api/invoice/${order.invoiceFile}`, '_blank');
+    } else {
+      alert('No invoice file available for this order.');
+    }
   };
 
   return (
@@ -212,6 +222,11 @@ const OrdersTable = ({ orders, onUpdate, onDelete }) => {
                       <td className="amount">${order.discount.toFixed(2)}</td>
                       <td className="amount total">${order.total.toFixed(2)}</td>
                       <td className="actions">
+                        {order.invoiceFile && (
+                          <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
+                            📄
+                          </button>
+                        )}
                         <button onClick={() => startEdit(order)} className="btn-edit">Edit</button>
                         <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
                       </td>

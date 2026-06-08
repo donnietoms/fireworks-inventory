@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useInventory } from './hooks/useInventory';
 import { useOrders } from './hooks/useOrders';
+import { API_BASE_URL } from './config';
 import InventoryTable from './components/InventoryTable';
 import OrdersTable from './components/OrdersTable';
 import FileUpload from './components/FileUpload';
@@ -100,17 +101,35 @@ function App() {
         orderNumber: orderNumber,
         subtotal: orderInfo.subtotal || items.reduce((sum, item) => sum + (item.quantity * item.cost), 0),
         discount: orderInfo.discount || 0,
-        total: orderInfo.total || items.reduce((sum, item) => sum + (item.quantity * item.cost), 0)
+        total: orderInfo.total || items.reduce((sum, item) => sum + (item.quantity * item.cost), 0),
+        invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
+        originalFileName: fileName
       });
     }
     
     return result;
   };
 
-  const handleDeleteOrder = (orderId, orderNumber) => {
+  const handleDeleteOrder = async (orderId, orderNumber) => {
     if (confirm(`Delete order ${orderNumber}?\n\nThis will also remove all inventory items from this order.`)) {
+      // Find the order to get invoice file info
+      const order = orders.find(o => o.id === orderId);
+      
+      // Delete the order and inventory items
       deleteOrder(orderId);
       deleteItemsByOrder(orderNumber);
+      
+      // Delete the invoice file if it exists
+      if (order?.invoiceFile) {
+        try {
+          await fetch(`${API_BASE_URL}/api/invoice/${order.invoiceFile}`, {
+            method: 'DELETE'
+          });
+        } catch (error) {
+          console.error('Failed to delete invoice file:', error);
+          // Don't fail the whole operation if file deletion fails
+        }
+      }
     }
   };
 

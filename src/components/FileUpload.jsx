@@ -96,6 +96,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         vendor: result.vendor || result.detectedVendor || 'Unknown',
         detectedVendor: result.detectedVendor,
         orderInfo: result.orderInfo || null,
+        savedFileName: result.savedFileName || null, // Store saved filename from backend
         isInvoice: isInvoice,
         originalFile: file
       });
@@ -136,7 +137,8 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         orderNumber: preview.orderInfo.orderNumber,
         subtotal: preview.orderInfo.subtotal,
         discount: preview.orderInfo.discount,
-        total: preview.orderInfo.total
+        total: preview.orderInfo.total,
+        savedFileName: preview.savedFileName // Include saved filename
       } : null;
       
       const warnings = onUpload(preview.items, preview.fileName, orderInfo);
