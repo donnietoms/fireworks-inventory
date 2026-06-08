@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import './CurrentInventory.css';
 
 function CurrentInventory({ inventory, shows, orders }) {
+  const [searchTerm, setSearchTerm] = useState('');
   // Calculate current inventory with FIFO costing
   const currentInventory = useMemo(() => {
     // First, calculate how much of each product has been used in shows
@@ -78,6 +79,19 @@ function CurrentInventory({ inventory, shows, orders }) {
     return Object.values(grouped)
       .sort((a, b) => a.partNumber.localeCompare(b.partNumber));
   }, [inventory, shows]);
+
+  // Filter inventory based on search term
+  const filteredInventory = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return currentInventory;
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return currentInventory.filter(item => 
+      item.partNumber.toLowerCase().includes(search) ||
+      item.description.toLowerCase().includes(search)
+    );
+  }, [currentInventory, searchTerm]);
 
   const formatCurrency = (value) => {
     return `$${value.toFixed(2)}`;
@@ -181,13 +195,13 @@ function CurrentInventory({ inventory, shows, orders }) {
     document.body.removeChild(link);
   };
 
-  // Calculate totals
+  // Calculate totals (use filtered inventory for displayed totals)
   const totals = useMemo(() => {
-    return currentInventory.reduce((acc, item) => ({
+    return filteredInventory.reduce((acc, item) => ({
       available: acc.available + item.available,
       value: acc.value + (item.available * item.avgCost)
     }), { available: 0, value: 0 });
-  }, [currentInventory]);
+  }, [filteredInventory]);
 
   if (currentInventory.length === 0) {
     return (
@@ -225,6 +239,30 @@ function CurrentInventory({ inventory, shows, orders }) {
         </div>
       </div>
 
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search by part number or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')} 
+            className="clear-search"
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
+        {searchTerm && (
+          <span className="search-results">
+            Showing {filteredInventory.length} of {currentInventory.length} products
+          </span>
+        )}
+      </div>
+
       <div className="current-inventory-table-container">
         <table className="current-inventory-table">
           <thead>
@@ -236,7 +274,7 @@ function CurrentInventory({ inventory, shows, orders }) {
             </tr>
           </thead>
           <tbody>
-            {currentInventory.map((item, index) => (
+            {filteredInventory.map((item, index) => (
               <tr key={index}>
                 <td>{item.partNumber}</td>
                 <td className="description-cell">{item.description}</td>
