@@ -220,3 +220,31 @@ body {
   justify-content: flex-end;
   gap: 12px;
 }
+
+.orders-header button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.orders-header .btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.orders-header .btn-primary:hover {
+  background: #45a049;
+}
+
+.orders-header .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.orders-header .btn-secondary:hover {
+  background: #5a6268;
+}
