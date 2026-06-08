@@ -143,8 +143,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         if (packingEdits[item.partNumber]) {
           const { packagesPerCase, itemsPerPackage } = packingEdits[item.partNumber];
           const totalPacking = packagesPerCase * itemsPerPackage;
-          const totalShells = item.cases * totalPacking;
-          const costPerShell = item.cost / totalPacking; // item.cost is currently per case for missing packing
+          const totalItems = item.cases * packagesPerCase * itemsPerPackage;
+          const costPerItem = item.lineTotal / totalItems;
           
           return {
             ...item,
@@ -152,8 +152,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
             packing: totalPacking, // Total items per case (numeric)
             packagesPerCase,
             itemsPerPackage,
-            quantity: totalShells,
-            cost: parseFloat(costPerShell.toFixed(2)),
+            quantity: totalItems,
+            cost: costPerItem,
             needsPacking: false
           };
         }
@@ -257,31 +257,31 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   };
 
   const getEffectiveQuantity = (item) => {
+    const packing = getEffectivePacking(item);
+    
+    // If we have manual packing edits, calculate total
+    if (packingEdits[item.partNumber] && packing.total) {
+      return item.cases * packing.total;
+    }
     // If item already has quantity calculated (has packing), use it
-    if (item.quantity !== null && !packingEdits[item.partNumber]) {
+    if (item.quantity !== null && !item.needsPacking) {
       return item.quantity;
     }
-    // Otherwise calculate from cases and packing
-    const packing = getEffectivePacking(item);
-    if (packing.total === null) return null;
-    return item.cases * packing.total;
+    // Otherwise can't calculate without packing
+    return null;
   };
 
   const getEffectiveCost = (item) => {
     const packing = getEffectivePacking(item);
+    const qty = getEffectiveQuantity(item);
     
-    // If we have manual packing edits, recalculate cost per shell
-    if (packingEdits[item.partNumber] && packing.total) {
-      // For items that needed packing, item.cost is already per-unit from invoice
+    // Calculate: lineTotal ÷ (quantity × packing)
+    if (qty && qty > 0) {
+      return item.lineTotal / qty;
+    }
+    // If item already has cost calculated, use it
+    if (item.cost !== null && !item.needsPacking) {
       return item.cost;
-    }
-    // If item already has cost calculated (has packing), use it
-    if (item.quantity !== null && !item.needsPacking) {
-      return item.cost; // Already cost per shell
-    }
-    // For items missing packing, show the unit price from invoice
-    if (item.needsPacking) {
-      return item.cost; // Already unit price from invoice
     }
     return null;
   };

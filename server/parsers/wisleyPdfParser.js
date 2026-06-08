@@ -209,22 +209,22 @@ function parseWisleyLine(originalLine, fullLine = null) {
     .replace(/\s*-\s*$/g, '') // Remove trailing dashes
     .trim();
   
-  // Calculate total shells per case (packages × items per package)
+  // Calculate total items: quantity × packages per case × items per package
   const totalPacking = packagesPerCase * itemsPerPackage;
   const hasPacking = packingMatch !== null;
-  const totalShells = hasPacking ? casesOrdered * totalPacking : casesOrdered; // Use casesOrdered as quantity if no packing
+  const totalItems = hasPacking ? casesOrdered * packagesPerCase * itemsPerPackage : null; // null if packing unknown
   const invoiceLineTotal = parseFloat(lineTotal.toFixed(2)); // Exact line total from invoice
   
-  // Calculate cost per shell: always lineTotal / quantity
-  const costPerShell = totalShells > 0 ? invoiceLineTotal / totalShells : 0;
+  // Calculate cost per item: lineTotal ÷ (quantity × packing)
+  const costPerItem = totalItems > 0 ? invoiceLineTotal / totalItems : null;
   
   return {
     partNumber,
     description,
-    quantity: totalShells,  // Total shells (calculated from packing if available, otherwise just quantity ordered)
-    cost: costPerShell,  // Cost per shell = lineTotal / quantity
+    quantity: totalItems,  // Total items (null if packing unknown - needs manual entry)
+    cost: costPerItem,  // Cost per item = lineTotal ÷ total items
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
-    cases: casesOrdered,  // Number of cases ordered (or units if no packing)
+    cases: casesOrdered,  // Number of cases/units ordered from invoice
     packing: hasPacking ? totalPacking : null,  // Total items per case (packagesPerCase × itemsPerPackage)
     packagesPerCase: hasPacking ? packagesPerCase : null,  // Number of packages in a case (X in X/Y)
     itemsPerPackage: hasPacking ? itemsPerPackage : null,  // Number of items per package (Y in X/Y)
