@@ -212,26 +212,19 @@ function parseWisleyLine(originalLine, fullLine = null) {
   // Calculate total shells per case (packages × items per package)
   const totalPacking = packagesPerCase * itemsPerPackage;
   const hasPacking = packingMatch !== null;
-  const totalShells = hasPacking ? casesOrdered * totalPacking : null; // null if packing unknown
+  const totalShells = hasPacking ? casesOrdered * totalPacking : casesOrdered; // Use casesOrdered as quantity if no packing
   const invoiceLineTotal = parseFloat(lineTotal.toFixed(2)); // Exact line total from invoice
   
-  // Calculate cost per shell from line total (not rounded, to maintain accuracy)
-  let costPerShell;
-  if (totalShells > 0) {
-    // Has packing: calculate cost per shell from line total
-    costPerShell = invoiceLineTotal / totalShells;
-  } else {
-    // No packing: use unit price from invoice (pricePerCase is actually unit price)
-    costPerShell = pricePerCase;
-  }
+  // Calculate cost per shell: always lineTotal / quantity
+  const costPerShell = totalShells > 0 ? invoiceLineTotal / totalShells : 0;
   
   return {
     partNumber,
     description,
-    quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
-    cost: costPerShell,  // Cost per shell (from calculation if has packing, or unit price if no packing)
+    quantity: totalShells,  // Total shells (calculated from packing if available, otherwise just quantity ordered)
+    cost: costPerShell,  // Cost per shell = lineTotal / quantity
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
-    cases: casesOrdered,  // Number of cases ordered (always set, even if packing unknown)
+    cases: casesOrdered,  // Number of cases ordered (or units if no packing)
     packing: hasPacking ? totalPacking : null,  // Total items per case (packagesPerCase × itemsPerPackage)
     packagesPerCase: hasPacking ? packagesPerCase : null,  // Number of packages in a case (X in X/Y)
     itemsPerPackage: hasPacking ? itemsPerPackage : null,  // Number of items per package (Y in X/Y)
