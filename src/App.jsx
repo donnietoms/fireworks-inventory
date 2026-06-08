@@ -280,31 +280,6 @@ function App() {
           <h1>Fireworks Inventory</h1>
           <p className="subtitle">Track your pyrotechnic products</p>
         </div>
-        <div className="header-actions">
-          <button onClick={() => setShowAddModal(true)} className="btn-primary">
-            + Add Item
-          </button>
-          <div className="dropdown">
-            <button className="btn-secondary">Export</button>
-            <div className="dropdown-content">
-              <button onClick={() => handleExport('csv')}>Export CSV</button>
-              <button onClick={() => handleExport('excel')}>Export Excel</button>
-              <button onClick={() => handleExport('json')}>Export JSON</button>
-            </div>
-          </div>
-          <label className="btn-secondary import-btn">
-            Import JSON
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportJSON}
-              style={{ display: 'none' }}
-            />
-          </label>
-          <button onClick={handleClearInventory} className="btn-danger">
-            Clear All
-          </button>
-        </div>
       </header>
 
       <nav className="tab-nav">
