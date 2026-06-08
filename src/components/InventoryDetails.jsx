@@ -65,6 +65,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
             <tr>
               <th>Order #</th>
               <th>Order Date</th>
+              <th>Packing</th>
               <th>Quantity</th>
               <th>Cost/Unit</th>
               <th>Line Value</th>
@@ -81,6 +82,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                   </span>
                 </td>
                 <td>{formatDate(item.orderDate)}</td>
+                <td>{item.packing || '-'}</td>
                 <td>{item.quantity}</td>
                 <td>{formatCurrency(item.cost)}</td>
                 <td>{formatCurrency(item.lineTotal || (item.quantity * item.cost))}</td>
@@ -102,7 +104,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan="2"><strong>TOTALS</strong></td>
+              <td colSpan="3"><strong>TOTALS</strong></td>
               <td><strong>{totalQuantity}</strong></td>
               <td><strong>{formatCurrency(avgCost)}</strong></td>
               <td><strong>{formatCurrency(totalValue)}</strong></td>
