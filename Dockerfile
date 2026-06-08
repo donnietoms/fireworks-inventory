@@ -5,11 +5,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY server/package*.json ./server/
 
 # Install dependencies
 RUN npm install
-RUN cd server && npm install
 
 # Copy source
 COPY . .
@@ -28,7 +26,7 @@ RUN npm install -g serve
 # Copy built files and server
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
-COPY --from=builder /app/server/node_modules ./server/node_modules
+COPY --from=builder /app/node_modules ./node_modules
 
 # Create startup script
 RUN echo '#!/bin/sh' > /app/start.sh && \
