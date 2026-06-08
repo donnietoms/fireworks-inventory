@@ -175,25 +175,36 @@ function parseWisleyLine(originalLine, fullLine = null) {
     pricePerCase = dataNumbers[dataNumbers.length - 2];
   }
   
-  // Extract description from FULL LINE
+  // Extract description from FULL LINE, but remove price data from ORIGINAL line position
   let description = afterPartNumFull;
   
-  // Remove packing notation
-  if (packingMatch) {
-    description = description.replace(/\s*-?\s*\d+\/\d+/, '');
-  }
-  
-  // Try to find the start of the quantity/price section
+  // Find where the price data starts in the ORIGINAL line
   const priceDataPattern = /\s+(\d+)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)(?=\s|$)/;
-  const priceMatch = description.match(priceDataPattern);
+  const priceMatchInOriginal = afterPartNumOriginal.match(priceDataPattern);
   
-  if (priceMatch) {
-    // Remove everything from the price data onward
-    description = description.substring(0, priceMatch.index);
+  if (priceMatchInOriginal) {
+    // Calculate where this is in the original line
+    const priceStartIndex = priceMatchInOriginal.index;
+    
+    // If the full line is longer than original (has continuation), 
+    // keep the continuation but remove the price section from the original part
+    const originalPartLength = afterPartNumOriginal.length;
+    const beforePrice = afterPartNumFull.substring(0, priceStartIndex);
+    const continuation = afterPartNumFull.substring(originalPartLength);
+    
+    description = beforePrice + continuation;
   }
   
-  // Clean up trailing whitespace and dashes
-  description = description.trim().replace(/\s*-\s*$/, '').trim();
+  // Remove packing notation (can appear anywhere in the description)
+  if (packingMatch) {
+    description = description.replace(/\s*-?\s*\d+\/\d+/g, '');
+  }
+  
+  // Clean up: remove product codes, packing, trailing dashes
+  description = description.trim()
+    .replace(/\s*\([A-Z0-9-]+\)\s*/g, '') // Remove product codes like (CM-8-21) or (PBG)
+    .replace(/\s*-\s*$/g, '') // Remove trailing dashes
+    .trim();
   
   // Calculate total shells and cost per shell
   const totalPacking = itemsPerCase * casesPerUnit;

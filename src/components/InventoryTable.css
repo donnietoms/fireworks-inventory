@@ -117,14 +117,20 @@
   vertical-align: top;
   line-height: 1.5;
   font-size: 14px;
+}
+
+/* Most columns should truncate with ellipsis */
+.inventory-table td:not(:nth-child(2)) {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Description column should wrap, not truncate */
 .inventory-table td:nth-child(2) {
-  overflow: visible;
-  text-overflow: clip;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
 }
 
 /* Increase font size for better readability */
