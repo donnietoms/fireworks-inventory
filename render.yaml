@@ -1,12 +1,9 @@
-# Render.com deployment configuration
 services:
-  # Combined web service (frontend + backend)
   - type: web
     name: fireworks-inventory
-    env: docker
-    dockerfilePath: ./Dockerfile
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node server/index.js & npx serve -s dist -l $PORT
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
+      - key: NODE_VERSION
+        value: 20
