@@ -82,7 +82,6 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
               <th>Total Quantity</th>
               <th>Avg Cost/Unit</th>
               <th>Total Value</th>
-              <th>Orders</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -101,7 +100,6 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
                 <td>{item.totalQuantity}</td>
                 <td>{formatCurrency(item.avgCost)}</td>
                 <td>{formatCurrency(item.totalValue)}</td>
-                <td>{item.orderCount}</td>
                 <td>
                   <button
                     className="btn-view"
@@ -120,7 +118,6 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
               <td><strong>{totalItems}</strong></td>
               <td></td>
               <td><strong>{formatCurrency(totalValue)}</strong></td>
-              <td></td>
               <td></td>
             </tr>
           </tfoot>
