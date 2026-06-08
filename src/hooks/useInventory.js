@@ -20,7 +20,7 @@ export const useInventory = () => {
   }, [inventory, loading]);
 
   // Add items from invoice (increases quantity)
-  const addFromInvoice = useCallback((items, invoiceName = 'Invoice', orderNumber = null) => {
+  const addFromInvoice = useCallback((items, invoiceName = 'Invoice', orderNumber = null, orderDate = null) => {
     setInventory(prev => {
       const updated = [...prev];
       
@@ -37,7 +37,7 @@ export const useInventory = () => {
           cases: newItem.cases, // Number of cases
           packing: newItem.packing, // Shells per case
           orderNumber: orderNumber,
-          orderDate: new Date().toISOString() // Track when this inventory was added
+          orderDate: orderDate || new Date().toISOString() // Use provided date or current date
         });
       });
       

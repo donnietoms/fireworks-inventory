@@ -247,12 +247,7 @@ function App() {
     addOrder(order);
     
     // Add all items to inventory
-    items.forEach(item => {
-      addFromInvoice([item], null, {
-        orderNumber: order.orderNumber,
-        orderDate: order.orderDate
-      });
-    });
+    addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
   };
 
   const handleManualShowEntry = (showData) => {
