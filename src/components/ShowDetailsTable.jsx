@@ -66,7 +66,9 @@ function ShowDetailsTable({ show, onBack }) {
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan="3"><strong>TOTALS</strong></td>
+              <td><strong>TOTALS</strong></td>
+              <td></td>
+              <td></td>
               <td><strong>{show.totalItems}</strong></td>
               <td></td>
               <td><strong>{formatCurrency(show.totalValue)}</strong></td>
