@@ -129,10 +129,11 @@
   white-space: nowrap;
   text-align: left;
   vertical-align: middle;
+  display: table-cell !important;
 }
 
 .inventory-list-table .totals-row {
-  display: table-row;
+  display: table-row !important;
 }
 
 .empty-state {
