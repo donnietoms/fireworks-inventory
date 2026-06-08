@@ -229,22 +229,10 @@ body {
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s;
-}
-
-.orders-header .btn-primary {
   background: #4CAF50;
   color: white;
 }
 
-.orders-header .btn-primary:hover {
+.orders-header button:hover {
   background: #45a049;
-}
-
-.orders-header .btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.orders-header .btn-secondary:hover {
-  background: #5a6268;
 }
