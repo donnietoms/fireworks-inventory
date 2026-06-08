@@ -54,7 +54,6 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
             <span><strong>Total Quantity:</strong> {totalQuantity}</span>
             <span><strong>Avg Cost/Unit:</strong> {formatCurrency(avgCost)}</span>
             <span><strong>Total Value:</strong> {formatCurrency(totalValue)}</span>
-            <span><strong>Orders:</strong> {sortedItems.length}</span>
           </div>
         </div>
       </div>
