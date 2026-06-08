@@ -148,7 +148,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
           
           return {
             ...item,
-            packing: `${itemsPerCase}/${casesPerUnit}`,
+            cases: item.casesOrdered, // Number of cases
+            packing: totalPacking, // Total shells per case (numeric)
             itemsPerCase,
             casesPerUnit,
             quantity: totalShells,
