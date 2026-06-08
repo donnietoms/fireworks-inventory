@@ -12,6 +12,8 @@ import ShowDetailsTable from './components/ShowDetailsTable';
 import FileUpload from './components/FileUpload';
 import AddItemModal from './components/AddItemModal';
 import AddOrderModal from './components/AddOrderModal';
+import ManualOrderModal from './components/ManualOrderModal';
+import ManualShowModal from './components/ManualShowModal';
 import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './App.css';
@@ -50,6 +52,8 @@ function App() {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+  const [showManualOrderModal, setShowManualOrderModal] = useState(false);
+  const [showManualShowModal, setShowManualShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('current-inventory');
   const [selectedShowId, setSelectedShowId] = useState(null);
   const [selectedPartNumber, setSelectedPartNumber] = useState(null);
@@ -238,6 +242,27 @@ function App() {
     deleteShow(showId);
   };
 
+  const handleManualOrderEntry = ({ order, items }) => {
+    // Add the order
+    addOrder(order);
+    
+    // Add all items to inventory
+    items.forEach(item => {
+      addFromInvoice([item], null, {
+        orderNumber: order.orderNumber,
+        orderDate: order.orderDate
+      });
+    });
+  };
+
+  const handleManualShowEntry = (showData) => {
+    // Add the show
+    addShow(showData);
+    
+    // Subtract items from inventory using FIFO
+    subtractFromShootList(showData.items, null, showData);
+  };
+
   const handleViewShowDetails = (showId) => {
     setSelectedShowId(showId);
     setActiveTab('show-details');
@@ -345,8 +370,8 @@ function App() {
         {activeTab === 'orders' && (
           <>
             <div className="orders-header">
-              <button onClick={() => setShowAddOrderModal(true)} className="btn-primary">
-                + Add Order
+              <button onClick={() => setShowManualOrderModal(true)} className="btn-primary">
+                + Manual Entry
               </button>
             </div>
             <OrdersTable
@@ -359,11 +384,18 @@ function App() {
         )}
 
         {activeTab === 'shows' && (
-          <ShowsTable
-            shows={shows}
-            onDeleteShow={handleDeleteShow}
-            onViewDetails={handleViewShowDetails}
-          />
+          <>
+            <div className="orders-header">
+              <button onClick={() => setShowManualShowModal(true)} className="btn-primary">
+                + Manual Entry
+              </button>
+            </div>
+            <ShowsTable
+              shows={shows}
+              onDeleteShow={handleDeleteShow}
+              onViewDetails={handleViewShowDetails}
+            />
+          </>
         )}
 
         {activeTab === 'show-details' && (
@@ -404,6 +436,22 @@ function App() {
         onClose={() => setShowAddOrderModal(false)}
         onAdd={addOrder}
         existingOrders={orders}
+      />
+
+      <ManualOrderModal
+        isOpen={showManualOrderModal}
+        onClose={() => setShowManualOrderModal(false)}
+        onAdd={handleManualOrderEntry}
+        existingOrders={orders}
+        inventory={inventory}
+      />
+
+      <ManualShowModal
+        isOpen={showManualShowModal}
+        onClose={() => setShowManualShowModal(false)}
+        onAdd={handleManualShowEntry}
+        existingShows={shows}
+        inventory={inventory}
       />
     </div>
   );

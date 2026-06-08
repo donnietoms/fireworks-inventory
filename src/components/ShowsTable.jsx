@@ -5,7 +5,7 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails }) {
   if (shows.length === 0) {
     return (
       <div className="empty-state">
-        <p>No shows yet. Upload a shoot list to create a show record.</p>
+        <p>No shows yet. Upload a shoot list or use Manual Entry to create a show record.</p>
       </div>
     );
   }
