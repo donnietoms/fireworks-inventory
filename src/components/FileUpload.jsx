@@ -228,15 +228,23 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       ...prev,
       [partNumber]: {
         ...prev[partNumber],
-        [field]: parseInt(value) || 1
+        [field]: value === '' ? '' : parseInt(value)
       }
     }));
   };
 
   const getEffectivePacking = (item) => {
     if (packingEdits[item.partNumber]) {
-      const { packagesPerCase = 1, itemsPerPackage = 1 } = packingEdits[item.partNumber];
-      return { packagesPerCase, itemsPerPackage, total: packagesPerCase * itemsPerPackage };
+      const { packagesPerCase, itemsPerPackage } = packingEdits[item.partNumber];
+      // Check if both values are valid numbers
+      const pkgNum = parseInt(packagesPerCase);
+      const itemNum = parseInt(itemsPerPackage);
+      
+      if (!isNaN(pkgNum) && !isNaN(itemNum) && pkgNum > 0 && itemNum > 0) {
+        return { packagesPerCase: pkgNum, itemsPerPackage: itemNum, total: pkgNum * itemNum };
+      }
+      // If either value is missing or invalid, return null
+      return { packagesPerCase: pkgNum || null, itemsPerPackage: itemNum || null, total: null };
     }
     if (item.packing && item.packagesPerCase && item.itemsPerPackage) {
       return { 
