@@ -135,13 +135,14 @@ function parseWisleyLine(originalLine, fullLine = null) {
   const afterPartNumOriginal = originalLine.substring(originalLine.indexOf(partNumber) + partNumber.length);
   
   // Extract packing from the FULL line (may be in continuation)
+  // Packing format: X/Y where X = packages per case, Y = items per package
   const packingMatch = afterPartNumFull.match(/(\d+)\/(\d+)/);
-  let itemsPerCase = 1;
-  let casesPerUnit = 1;
+  let packagesPerCase = 1;
+  let itemsPerPackage = 1;
   
   if (packingMatch) {
-    itemsPerCase = parseInt(packingMatch[1]);
-    casesPerUnit = parseInt(packingMatch[2]);
+    packagesPerCase = parseInt(packingMatch[1]);
+    itemsPerPackage = parseInt(packingMatch[2]);
   }
   
   // Extract numbers from ORIGINAL line only (not continuation) for qty/price
@@ -208,8 +209,8 @@ function parseWisleyLine(originalLine, fullLine = null) {
     .replace(/\s*-\s*$/g, '') // Remove trailing dashes
     .trim();
   
-  // Calculate total shells
-  const totalPacking = itemsPerCase * casesPerUnit;
+  // Calculate total shells per case (packages × items per package)
+  const totalPacking = packagesPerCase * itemsPerPackage;
   const hasPacking = packingMatch !== null;
   const totalShells = hasPacking ? casesOrdered * totalPacking : null; // null if packing unknown
   const invoiceLineTotal = parseFloat(lineTotal.toFixed(2)); // Exact line total from invoice
@@ -224,9 +225,9 @@ function parseWisleyLine(originalLine, fullLine = null) {
     cost: costPerShell,  // Cost per shell calculated from lineTotal
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
     cases: hasPacking ? casesOrdered : null,  // Number of cases ordered
-    packing: hasPacking ? totalPacking : null,  // Shells per case (itemsPerCase × casesPerUnit)
-    itemsPerCase: hasPacking ? itemsPerCase : null,
-    casesPerUnit: hasPacking ? casesPerUnit : null,
+    packing: hasPacking ? totalPacking : null,  // Total items per case (packagesPerCase × itemsPerPackage)
+    packagesPerCase: hasPacking ? packagesPerCase : null,  // Number of packages in a case (X in X/Y)
+    itemsPerPackage: hasPacking ? itemsPerPackage : null,  // Number of items per package (Y in X/Y)
     needsPacking: !hasPacking  // Flag for items that need manual packing entry
   };
 }

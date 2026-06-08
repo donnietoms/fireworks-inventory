@@ -34,8 +34,8 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
     const avgCost = group.totalQuantity > 0 ? group.totalValue / group.totalQuantity : 0;
     // Get packing from first item (all items in same order should have same packing)
     const firstItem = group.items[0];
-    const packing = firstItem.itemsPerCase && firstItem.casesPerUnit 
-      ? `${firstItem.itemsPerCase}/${firstItem.casesPerUnit}` 
+    const packing = firstItem.packagesPerCase && firstItem.itemsPerPackage 
+      ? `${firstItem.packagesPerCase}/${firstItem.itemsPerPackage}` 
       : '-';
     
     return {

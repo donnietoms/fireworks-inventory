@@ -14,7 +14,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [detectedVendor, setDetectedVendor] = useState(null);
   const [needsVendorSelection, setNeedsVendorSelection] = useState(false);
   const [previewVendor, setPreviewVendor] = useState(null); // Vendor selected in preview
-  const [packingEdits, setPackingEdits] = useState({}); // Store packing edits: { partNumber: { itemsPerCase, casesPerUnit } }
+  const [packingEdits, setPackingEdits] = useState({}); // Store packing edits: { partNumber: { packagesPerCase, itemsPerPackage } }
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
@@ -141,17 +141,17 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       // Apply packing edits to items before uploading (invoices only)
       const updatedItems = isInvoice ? preview.items.map(item => {
         if (packingEdits[item.partNumber]) {
-          const { itemsPerCase, casesPerUnit } = packingEdits[item.partNumber];
-          const totalPacking = itemsPerCase * casesPerUnit;
+          const { packagesPerCase, itemsPerPackage } = packingEdits[item.partNumber];
+          const totalPacking = packagesPerCase * itemsPerPackage;
           const totalShells = item.casesOrdered * totalPacking;
           const costPerShell = item.cost / totalPacking; // item.cost is currently per case for missing packing
           
           return {
             ...item,
             cases: item.casesOrdered, // Number of cases
-            packing: totalPacking, // Total shells per case (numeric)
-            itemsPerCase,
-            casesPerUnit,
+            packing: totalPacking, // Total items per case (numeric)
+            packagesPerCase,
+            itemsPerPackage,
             quantity: totalShells,
             cost: parseFloat(costPerShell.toFixed(2)),
             needsPacking: false
@@ -235,17 +235,17 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
 
   const getEffectivePacking = (item) => {
     if (packingEdits[item.partNumber]) {
-      const { itemsPerCase = 1, casesPerUnit = 1 } = packingEdits[item.partNumber];
-      return { itemsPerCase, casesPerUnit, total: itemsPerCase * casesPerUnit };
+      const { packagesPerCase = 1, itemsPerPackage = 1 } = packingEdits[item.partNumber];
+      return { packagesPerCase, itemsPerPackage, total: packagesPerCase * itemsPerPackage };
     }
     if (item.packing) {
       return { 
-        itemsPerCase: item.itemsPerCase, 
-        casesPerUnit: item.casesPerUnit, 
-        total: item.itemsPerCase * item.casesPerUnit 
+        packagesPerCase: item.packagesPerCase, 
+        itemsPerPackage: item.itemsPerPackage, 
+        total: item.packagesPerCase * item.itemsPerPackage 
       };
     }
-    return { itemsPerCase: 1, casesPerUnit: 1, total: 1 };
+    return { packagesPerCase: 1, itemsPerPackage: 1, total: 1 };
   };
 
   const getEffectiveQuantity = (item) => {
@@ -495,23 +495,23 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                                 <input
                                   type="number"
                                   min="1"
-                                  placeholder="Items"
-                                  value={packingEdits[item.partNumber]?.itemsPerCase || ''}
-                                  onChange={(e) => handlePackingChange(item.partNumber, 'itemsPerCase', e.target.value)}
+                                  placeholder="Packages"
+                                  value={packingEdits[item.partNumber]?.packagesPerCase || ''}
+                                  onChange={(e) => handlePackingChange(item.partNumber, 'packagesPerCase', e.target.value)}
                                   style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
                                 />
                                 <span>/</span>
                                 <input
                                   type="number"
                                   min="1"
-                                  placeholder="Case"
-                                  value={packingEdits[item.partNumber]?.casesPerUnit || ''}
-                                  onChange={(e) => handlePackingChange(item.partNumber, 'casesPerUnit', e.target.value)}
+                                  placeholder="Items"
+                                  value={packingEdits[item.partNumber]?.itemsPerPackage || ''}
+                                  onChange={(e) => handlePackingChange(item.partNumber, 'itemsPerPackage', e.target.value)}
                                   style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
                                 />
                               </div>
                             ) : (
-                              `${packing.itemsPerCase}/${packing.casesPerUnit}`
+                              `${packing.packagesPerCase}/${packing.itemsPerPackage}`
                             )}
                           </td>
                           <td>{item.casesOrdered} cases × {packing.total} = {qty} shells</td>

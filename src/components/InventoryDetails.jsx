@@ -82,8 +82,8 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                   </td>
                 )}
                 <td>
-                  {item.itemsPerCase && item.casesPerUnit 
-                    ? `${item.itemsPerCase}/${item.casesPerUnit}` 
+                  {item.packagesPerCase && item.itemsPerPackage 
+                    ? `${item.packagesPerCase}/${item.itemsPerPackage}` 
                     : '-'}
                 </td>
                 <td>{item.quantity}</td>
