@@ -63,7 +63,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
         <table className="inventory-details-table">
           <thead>
             <tr>
-              <th>Order #</th>
+              {!orderNumber && <th>Order #</th>}
               <th>Order Date</th>
               <th>Packing</th>
               <th>Quantity</th>
@@ -75,12 +75,14 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           <tbody>
             {sortedItems.map((item, index) => (
               <tr key={item.id}>
-                <td>
-                  <span className="order-badge" title={index === 0 ? 'Oldest - Used first (FIFO)' : ''}>
-                    {item.orderNumber}
-                    {index === 0 && <span className="fifo-indicator" title="Next to be used (FIFO)">🔄</span>}
-                  </span>
-                </td>
+                {!orderNumber && (
+                  <td>
+                    <span className="order-badge" title={index === 0 ? 'Oldest - Used first (FIFO)' : ''}>
+                      {item.orderNumber}
+                      {index === 0 && <span className="fifo-indicator" title="Next to be used (FIFO)">🔄</span>}
+                    </span>
+                  </td>
+                )}
                 <td>{formatDate(item.orderDate)}</td>
                 <td>{item.packing || '-'}</td>
                 <td>{item.quantity}</td>
@@ -104,7 +106,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan="3"><strong>TOTALS</strong></td>
+              <td colSpan={orderNumber ? "2" : "3"}><strong>TOTALS</strong></td>
               <td><strong>{totalQuantity}</strong></td>
               <td><strong>{formatCurrency(avgCost)}</strong></td>
               <td><strong>{formatCurrency(totalValue)}</strong></td>
