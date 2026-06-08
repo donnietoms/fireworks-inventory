@@ -370,8 +370,11 @@ function App() {
         {activeTab === 'orders' && (
           <>
             <div className="orders-header">
-              <button onClick={() => setShowManualOrderModal(true)} className="btn-primary">
-                + Manual Entry
+              <button onClick={() => setActiveTab('upload')} className="btn-primary">
+                📤 Upload Order
+              </button>
+              <button onClick={() => setShowManualOrderModal(true)} className="btn-secondary">
+                ✏️ Manual Order
               </button>
             </div>
             <OrdersTable
@@ -386,8 +389,11 @@ function App() {
         {activeTab === 'shows' && (
           <>
             <div className="orders-header">
-              <button onClick={() => setShowManualShowModal(true)} className="btn-primary">
-                + Manual Entry
+              <button onClick={() => setActiveTab('upload')} className="btn-primary">
+                📤 Upload Show
+              </button>
+              <button onClick={() => setShowManualShowModal(true)} className="btn-secondary">
+                ✏️ Manual Show
               </button>
             </div>
             <ShowsTable
