@@ -223,10 +223,10 @@ function parseWisleyLine(originalLine, fullLine = null) {
     quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
     cost: costPerShell,  // Cost per shell calculated from lineTotal
     lineTotal: invoiceLineTotal,  // Store exact line total from invoice
-    packing: hasPacking ? `${itemsPerCase}/${casesPerUnit}` : null,
+    cases: hasPacking ? casesOrdered : null,  // Number of cases ordered
+    packing: hasPacking ? totalPacking : null,  // Shells per case (itemsPerCase × casesPerUnit)
     itemsPerCase: hasPacking ? itemsPerCase : null,
     casesPerUnit: hasPacking ? casesPerUnit : null,
-    casesOrdered: casesOrdered,  // Store original cases for reference
     needsPacking: !hasPacking  // Flag for items that need manual packing entry
   };
 }

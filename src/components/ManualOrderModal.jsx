@@ -72,7 +72,8 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
     const newItem = {
       partNumber: currentItem.partNumber,
       description: currentItem.description,
-      packing: currentItem.packing || null,
+      cases: currentItem.cases ? parseFloat(currentItem.cases) : null,
+      packing: currentItem.packing ? parseInt(currentItem.packing) : null,
       quantity: parseInt(currentItem.quantity),
       cost: parseFloat(currentItem.cost),
       lineTotal: parseFloat(currentItem.lineTotal)
@@ -348,7 +349,11 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
                     <tr key={index}>
                       <td>{item.partNumber}</td>
                       <td>{item.description}</td>
-                      <td>{item.packing || '-'}</td>
+                      <td>
+                        {item.cases && item.packing 
+                          ? `${item.cases}/${item.packing}` 
+                          : item.packing || '-'}
+                      </td>
                       <td>{item.quantity}</td>
                       <td>${item.cost.toFixed(4)}</td>
                       <td>${item.lineTotal.toFixed(2)}</td>

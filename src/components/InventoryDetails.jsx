@@ -84,7 +84,11 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                   </td>
                 )}
                 <td>{formatDate(item.orderDate)}</td>
-                <td>{item.packing || '-'}</td>
+                <td>
+                  {item.cases && item.packing 
+                    ? `${item.cases}/${item.packing}` 
+                    : item.packing || '-'}
+                </td>
                 <td>{item.quantity}</td>
                 <td>{formatCurrency(item.cost)}</td>
                 <td>{formatCurrency(item.lineTotal || (item.quantity * item.cost))}</td>
