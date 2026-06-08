@@ -34,6 +34,8 @@ export const useInventory = () => {
           quantity: newItem.quantity,
           cost: newItem.cost,
           lineTotal: newItem.lineTotal, // Store exact line total from invoice
+          cases: newItem.cases, // Number of cases
+          packing: newItem.packing, // Shells per case
           orderNumber: orderNumber,
           orderDate: new Date().toISOString() // Track when this inventory was added
         });
