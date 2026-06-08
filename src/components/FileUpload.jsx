@@ -238,14 +238,14 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       const { packagesPerCase = 1, itemsPerPackage = 1 } = packingEdits[item.partNumber];
       return { packagesPerCase, itemsPerPackage, total: packagesPerCase * itemsPerPackage };
     }
-    if (item.packing) {
+    if (item.packing && item.packagesPerCase && item.itemsPerPackage) {
       return { 
         packagesPerCase: item.packagesPerCase, 
         itemsPerPackage: item.itemsPerPackage, 
         total: item.packagesPerCase * item.itemsPerPackage 
       };
     }
-    return { packagesPerCase: 1, itemsPerPackage: 1, total: 1 };
+    return { packagesPerCase: null, itemsPerPackage: null, total: null };
   };
 
   const getEffectiveQuantity = (item) => {
@@ -514,8 +514,13 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                               `${packing.packagesPerCase}/${packing.itemsPerPackage}`
                             )}
                           </td>
-                          <td>{item.casesOrdered} cases × {packing.total} = {qty} shells</td>
-                          <td>${cost.toFixed(2)}</td>
+                          <td>
+                            {packing.total !== null 
+                              ? `${item.casesOrdered} cases × ${packing.total} = ${qty} shells`
+                              : `${item.casesOrdered} cases × ? = ? shells (enter packing)`
+                            }
+                          </td>
+                          <td>${cost !== null && !isNaN(cost) ? cost.toFixed(2) : '?'}</td>
                         </>
                       ) : (
                         <>
