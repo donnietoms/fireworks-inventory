@@ -134,10 +134,8 @@ function App() {
       }
     }
     
-    // Add items to inventory with order number
-    const result = addFromInvoice(items, fileName, orderNumber);
-    
     // Create order record if orderInfo provided
+    const orderDate = new Date().toISOString();
     if (orderInfo) {
       addOrder({
         vendor: orderInfo.vendor || 'Unknown',
@@ -146,9 +144,13 @@ function App() {
         discount: orderInfo.discount || 0,
         total: orderInfo.total || 0,
         invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
-        originalFileName: fileName
+        originalFileName: fileName,
+        createdAt: orderDate
       });
     }
+    
+    // Add items to inventory with order number and date
+    const result = addFromInvoice(items, fileName, orderNumber, orderDate);
     
     return result;
   };

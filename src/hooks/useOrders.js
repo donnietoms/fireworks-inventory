@@ -38,8 +38,8 @@ export function useOrders() {
   const addOrder = (order) => {
     const newOrder = {
       id: Date.now().toString(),
-      ...order,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      ...order
     };
     setOrders(prev => [newOrder, ...prev]);
     return newOrder;
