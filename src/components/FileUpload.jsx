@@ -5,7 +5,7 @@ import { useVendors } from '../hooks/useVendors';
 import { API_BASE_URL } from '../config';
 import './FileUpload.css';
 
-const FileUpload = ({ type, onUpload, disabled }) => {
+const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -46,13 +46,18 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         const formData = new FormData();
         formData.append('file', file);
         
-        // Add vendor hint if not auto-detect
-        const vendorToUse = retryWithVendor || (selectedVendor !== 'auto' ? selectedVendor : null);
-        if (vendorToUse) {
-          formData.append('vendor', vendorToUse);
+        // Use different endpoint for shoot lists vs invoices
+        const endpoint = isInvoice ? '/api/parse-pdf' : '/api/parse-shootlist';
+        
+        // Add vendor hint if not auto-detect (invoices only)
+        if (isInvoice) {
+          const vendorToUse = retryWithVendor || (selectedVendor !== 'auto' ? selectedVendor : null);
+          if (vendorToUse) {
+            formData.append('vendor', vendorToUse);
+          }
         }
         
-        const response = await fetch(`${API_BASE_URL}/api/parse-pdf`, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           body: formData
         });
@@ -60,7 +65,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
       if (!response.ok) {
         const error = await response.json();
         
-        // If vendor detection failed, show vendor selector
+        // If vendor detection failed, show vendor selector (invoices only)
         if (error.needsVendorSelection) {
           setNeedsVendorSelection(true);
           setUploading(false);
@@ -97,6 +102,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         vendor: result.vendor || result.detectedVendor || 'Unknown',
         detectedVendor: result.detectedVendor,
         orderInfo: result.orderInfo || null,
+        showInfo: result.showInfo || null, // For shoot lists
         savedFileName: result.savedFileName || null, // Store saved filename from backend
         isInvoice: isInvoice,
         originalFile: file
@@ -132,8 +138,8 @@ const FileUpload = ({ type, onUpload, disabled }) => {
 
   const handleConfirm = () => {
     if (preview) {
-      // Apply packing edits to items before uploading
-      const updatedItems = preview.items.map(item => {
+      // Apply packing edits to items before uploading (invoices only)
+      const updatedItems = isInvoice ? preview.items.map(item => {
         if (packingEdits[item.partNumber]) {
           const { itemsPerCase, casesPerUnit } = packingEdits[item.partNumber];
           const totalPacking = itemsPerCase * casesPerUnit;
@@ -151,13 +157,15 @@ const FileUpload = ({ type, onUpload, disabled }) => {
           };
         }
         return item;
-      });
+      }) : preview.items;
       
-      // Check if any items still need packing
-      const stillNeedPacking = updatedItems.filter(i => i.needsPacking);
-      if (stillNeedPacking.length > 0) {
-        alert(`Please enter packing format for all items:\n${stillNeedPacking.map(i => i.partNumber).join(', ')}`);
-        return;
+      // Check if any items still need packing (invoices only)
+      if (isInvoice) {
+        const stillNeedPacking = updatedItems.filter(i => i.needsPacking);
+        if (stillNeedPacking.length > 0) {
+          alert(`Please enter packing format for all items:\n${stillNeedPacking.map(i => i.partNumber).join(', ')}`);
+          return;
+        }
       }
       
       // Pass order info if it's an invoice upload
@@ -170,7 +178,10 @@ const FileUpload = ({ type, onUpload, disabled }) => {
         savedFileName: preview.savedFileName // Include saved filename
       } : null;
       
-      const warnings = onUpload(updatedItems, preview.fileName, orderInfo);
+      // Pass show info if it's a shoot list upload
+      const showInfo = !isInvoice && preview.showInfo ? preview.showInfo : null;
+      
+      const warnings = onUpload(updatedItems, preview.fileName, isInvoice ? orderInfo : showInfo);
       
       if (warnings && warnings.length > 0) {
         const warningMessages = warnings.map(w => 
@@ -386,8 +397,32 @@ const FileUpload = ({ type, onUpload, disabled }) => {
             </div>
           )}
           
+          {/* Show show info if available */}
+          {!isInvoice && preview.showInfo && (
+            <div className="order-info">
+              {preview.showInfo.name && (
+                <div className="order-detail">
+                  <span className="label">Show Name:</span>
+                  <span className="value">{preview.showInfo.name}</span>
+                </div>
+              )}
+              {preview.showInfo.date && (
+                <div className="order-detail">
+                  <span className="label">Date:</span>
+                  <span className="value">{preview.showInfo.date}</span>
+                </div>
+              )}
+              {preview.showInfo.location && (
+                <div className="order-detail">
+                  <span className="label">Location:</span>
+                  <span className="value">{preview.showInfo.location}</span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {/* Warning for items missing packing */}
-          {preview.items.some(item => item.needsPacking) && (
+          {isInvoice && preview.items.some(item => item.needsPacking) && (
             <div className="packing-warning" style={{
               background: '#fff3cd',
               border: '1px solid #ffc107',
@@ -407,11 +442,24 @@ const FileUpload = ({ type, onUpload, disabled }) => {
             <table className="preview-table">
               <thead>
                 <tr>
-                  <th>Part Number</th>
-                  <th>Description</th>
-                  <th>Packing (Items/Case)</th>
-                  <th>Quantity (Shells)</th>
-                  <th>Cost/Shell</th>
+                  {isInvoice ? (
+                    <>
+                      <th>Part Number</th>
+                      <th>Description</th>
+                      <th>Packing (Items/Case)</th>
+                      <th>Quantity (Shells)</th>
+                      <th>Cost/Shell</th>
+                    </>
+                  ) : (
+                    <>
+                      <th>Size</th>
+                      <th>Part Number</th>
+                      <th>Description</th>
+                      <th>Quantity</th>
+                      <th>In Inventory</th>
+                      <th>Cost/Unit</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -420,39 +468,70 @@ const FileUpload = ({ type, onUpload, disabled }) => {
                   const qty = getEffectiveQuantity(item);
                   const cost = getEffectiveCost(item);
                   
+                  // For shoot lists, check if item is in inventory
+                  const inventoryItems = !isInvoice ? inventory.filter(inv => inv.partNumber === item.partNumber) : [];
+                  const hasInventory = inventoryItems.length > 0;
+                  const inventoryQty = inventoryItems.reduce((sum, inv) => sum + inv.quantity, 0);
+                  
+                  // Calculate weighted average cost from all matching inventory items
+                  let inventoryCost = 0;
+                  if (hasInventory && inventoryQty > 0) {
+                    const totalCost = inventoryItems.reduce((sum, inv) => sum + (inv.cost * inv.quantity), 0);
+                    inventoryCost = totalCost / inventoryQty;
+                  }
+                  
                   return (
                     <tr key={idx} style={item.needsPacking && !packingEdits[item.partNumber] ? { background: '#fff3cd' } : {}}>
-                      <td>{item.partNumber}</td>
-                      <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.description}
-                      </td>
-                      <td>
-                        {item.needsPacking ? (
-                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                            <input
-                              type="number"
-                              min="1"
-                              placeholder="Items"
-                              value={packingEdits[item.partNumber]?.itemsPerCase || ''}
-                              onChange={(e) => handlePackingChange(item.partNumber, 'itemsPerCase', e.target.value)}
-                              style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
-                            />
-                            <span>/</span>
-                            <input
-                              type="number"
-                              min="1"
-                              placeholder="Case"
-                              value={packingEdits[item.partNumber]?.casesPerUnit || ''}
-                              onChange={(e) => handlePackingChange(item.partNumber, 'casesPerUnit', e.target.value)}
-                              style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
-                            />
-                          </div>
-                        ) : (
-                          `${packing.itemsPerCase}/${packing.casesPerUnit}`
-                        )}
-                      </td>
-                      <td>{item.casesOrdered} cases × {packing.total} = {qty} shells</td>
-                      <td>${cost.toFixed(2)}</td>
+                      {isInvoice ? (
+                        <>
+                          <td>{item.partNumber}</td>
+                          <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.description}
+                          </td>
+                          <td>
+                            {item.needsPacking ? (
+                              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  placeholder="Items"
+                                  value={packingEdits[item.partNumber]?.itemsPerCase || ''}
+                                  onChange={(e) => handlePackingChange(item.partNumber, 'itemsPerCase', e.target.value)}
+                                  style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                />
+                                <span>/</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  placeholder="Case"
+                                  value={packingEdits[item.partNumber]?.casesPerUnit || ''}
+                                  onChange={(e) => handlePackingChange(item.partNumber, 'casesPerUnit', e.target.value)}
+                                  style={{ width: '60px', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                />
+                              </div>
+                            ) : (
+                              `${packing.itemsPerCase}/${packing.casesPerUnit}`
+                            )}
+                          </td>
+                          <td>{item.casesOrdered} cases × {packing.total} = {qty} shells</td>
+                          <td>${cost.toFixed(2)}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{item.size}</td>
+                          <td>{item.partNumber}</td>
+                          <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.description}
+                          </td>
+                          <td>{item.quantity || 0}</td>
+                          <td style={{ color: hasInventory ? 'green' : 'red' }}>
+                            {hasInventory ? `✓ ${inventoryQty}` : '✗ Not in inventory'}
+                          </td>
+                          <td>
+                            {hasInventory ? `$${inventoryCost.toFixed(2)}` : 'N/A'}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   );
                 })}

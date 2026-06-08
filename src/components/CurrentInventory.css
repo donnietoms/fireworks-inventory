@@ -1,0 +1,92 @@
+.current-inventory-container {
+  margin: 20px 0;
+}
+
+.current-inventory-summary {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.current-inventory-table-container {
+  overflow-x: auto;
+}
+
+.current-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.current-inventory-table th,
+.current-inventory-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.current-inventory-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+}
+
+.current-inventory-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.current-inventory-table .description-cell {
+  max-width: 400px;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.current-inventory-table .available-qty {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.current-inventory-table tfoot {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.current-inventory-table .totals-row td {
+  border-top: 2px solid #333;
+  padding-top: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 1.1em;
+}

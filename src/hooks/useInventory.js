@@ -25,46 +25,18 @@ export const useInventory = () => {
       const updated = [...prev];
       
       items.forEach(newItem => {
-        const existingIndex = updated.findIndex(
-          item => item.partNumber.toLowerCase() === newItem.partNumber.toLowerCase()
-        );
-        
-        if (existingIndex >= 0) {
-          // Update existing item
-          const existing = updated[existingIndex];
-          const newTotalQty = existing.quantity + newItem.quantity;
-          
-          // Calculate weighted average cost if both have costs
-          let newCost = existing.cost;
-          if (newItem.cost > 0) {
-            if (existing.cost > 0 && existing.quantity > 0) {
-              // Weighted average: (oldQty * oldCost + newQty * newCost) / totalQty
-              newCost = ((existing.quantity * existing.cost) + (newItem.quantity * newItem.cost)) / newTotalQty;
-              newCost = parseFloat(newCost.toFixed(2));
-            } else {
-              // No existing cost or quantity, use new cost
-              newCost = newItem.cost;
-            }
-          }
-          
-          updated[existingIndex] = {
-            ...existing,
-            quantity: newTotalQty,
-            cost: newCost,
-            description: newItem.description || existing.description,
-            orderNumber: orderNumber || existing.orderNumber
-          };
-        } else {
-          // Add new item
-          updated.push({
-            id: Date.now() + Math.random(),
-            partNumber: newItem.partNumber,
-            description: newItem.description,
-            quantity: newItem.quantity,
-            cost: newItem.cost,
-            orderNumber: orderNumber
-          });
-        }
+        // Instead of merging, always add as separate line item for FIFO tracking
+        // Each order line is a separate inventory record
+        updated.push({
+          id: Date.now() + Math.random(),
+          partNumber: newItem.partNumber,
+          description: newItem.description,
+          quantity: newItem.quantity,
+          cost: newItem.cost,
+          lineTotal: newItem.lineTotal, // Store exact line total from invoice
+          orderNumber: orderNumber,
+          orderDate: new Date().toISOString() // Track when this inventory was added
+        });
       });
       
       return updated;
@@ -78,42 +50,66 @@ export const useInventory = () => {
     });
   }, []);
 
-  // Remove items from shoot list (decreases quantity)
+  // Remove items from shoot list (decreases quantity) - uses FIFO
   const subtractFromShootList = useCallback((items, shootListName = 'Shoot List') => {
     const warnings = [];
     
     setInventory(prev => {
-      const updated = [...prev];
+      let updated = [...prev];
       
       items.forEach(removeItem => {
-        const existingIndex = updated.findIndex(
-          item => item.partNumber.toLowerCase() === removeItem.partNumber.toLowerCase()
-        );
+        // Find all matching part numbers, sorted by order date (FIFO - oldest first)
+        const matchingItems = updated
+          .map((item, index) => ({ ...item, originalIndex: index }))
+          .filter(item => item.partNumber.toLowerCase() === removeItem.partNumber.toLowerCase())
+          .sort((a, b) => {
+            // Sort by orderDate (oldest first)
+            const dateA = new Date(a.orderDate || 0).getTime();
+            const dateB = new Date(b.orderDate || 0).getTime();
+            return dateA - dateB;
+          });
         
-        if (existingIndex >= 0) {
-          const newQuantity = updated[existingIndex].quantity - removeItem.quantity;
-          
-          if (newQuantity < 0) {
-            warnings.push({
-              partNumber: removeItem.partNumber,
-              requested: removeItem.quantity,
-              available: updated[existingIndex].quantity
-            });
-          }
-          
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            quantity: Math.max(0, newQuantity)
-          };
-        } else {
+        if (matchingItems.length === 0) {
           warnings.push({
             partNumber: removeItem.partNumber,
             requested: removeItem.quantity,
             available: 0,
             notFound: true
           });
+          return;
         }
+        
+        // Calculate total available
+        const totalAvailable = matchingItems.reduce((sum, item) => sum + item.quantity, 0);
+        
+        if (totalAvailable < removeItem.quantity) {
+          warnings.push({
+            partNumber: removeItem.partNumber,
+            requested: removeItem.quantity,
+            available: totalAvailable
+          });
+        }
+        
+        // Subtract from oldest first (FIFO)
+        let remainingToSubtract = removeItem.quantity;
+        
+        matchingItems.forEach(item => {
+          if (remainingToSubtract <= 0) return;
+          
+          const subtractFromThis = Math.min(item.quantity, remainingToSubtract);
+          const newQuantity = item.quantity - subtractFromThis;
+          remainingToSubtract -= subtractFromThis;
+          
+          // Update the item in the updated array
+          updated[item.originalIndex] = {
+            ...updated[item.originalIndex],
+            quantity: newQuantity
+          };
+        });
       });
+      
+      // Remove items with zero quantity
+      updated = updated.filter(item => item.quantity > 0);
       
       return updated;
     });
@@ -136,7 +132,9 @@ export const useInventory = () => {
       partNumber: item.partNumber,
       description: item.description,
       quantity: item.quantity,
-      cost: item.cost
+      cost: item.cost,
+      orderNumber: item.orderNumber || 'Manual Entry',
+      orderDate: new Date().toISOString()
     }]);
   }, []);
 

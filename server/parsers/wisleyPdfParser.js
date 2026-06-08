@@ -164,15 +164,17 @@ function parseWisleyLine(originalLine, fullLine = null) {
   }
   
   // The last 2-3 numbers should be: quantity, unit_price, subtotal
-  let casesOrdered, pricePerCase;
+  let casesOrdered, pricePerCase, lineTotal;
   
   if (dataNumbers.length === 2) {
-    // Exactly 2 numbers: quantity and price
+    // Exactly 2 numbers: quantity and price (line total = price)
     [casesOrdered, pricePerCase] = dataNumbers;
+    lineTotal = pricePerCase;
   } else {
-    // 3+ numbers: take last 3 as qty, unit_price, subtotal
+    // 3+ numbers: take last 3 as qty, unit_price, line_total
     casesOrdered = Math.floor(dataNumbers[dataNumbers.length - 3]);
     pricePerCase = dataNumbers[dataNumbers.length - 2];
+    lineTotal = dataNumbers[dataNumbers.length - 1];
   }
   
   // Extract description from FULL LINE, but remove price data from ORIGINAL line position
@@ -206,17 +208,21 @@ function parseWisleyLine(originalLine, fullLine = null) {
     .replace(/\s*-\s*$/g, '') // Remove trailing dashes
     .trim();
   
-  // Calculate total shells and cost per shell
+  // Calculate total shells
   const totalPacking = itemsPerCase * casesPerUnit;
   const hasPacking = packingMatch !== null;
   const totalShells = hasPacking ? casesOrdered * totalPacking : null; // null if packing unknown
-  const costPerShell = totalPacking > 0 ? pricePerCase / totalPacking : pricePerCase;
+  const invoiceLineTotal = parseFloat(lineTotal.toFixed(2)); // Exact line total from invoice
+  
+  // Calculate cost per shell from line total (not rounded, to maintain accuracy)
+  const costPerShell = totalShells > 0 ? invoiceLineTotal / totalShells : invoiceLineTotal;
   
   return {
     partNumber,
     description,
     quantity: totalShells,  // Total shells (null if packing unknown - needs manual entry)
-    cost: hasPacking ? parseFloat(costPerShell.toFixed(2)) : pricePerCase,  // Cost per shell or per case
+    cost: costPerShell,  // Cost per shell calculated from lineTotal
+    lineTotal: invoiceLineTotal,  // Store exact line total from invoice
     packing: hasPacking ? `${itemsPerCase}/${casesPerUnit}` : null,
     itemsPerCase: hasPacking ? itemsPerCase : null,
     casesPerUnit: hasPacking ? casesPerUnit : null,

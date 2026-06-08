@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { parsePDF } from './parsers/index.js';
+import { parseShootListPDF } from './parsers/shootListParser.js';
 import { detectVendor, getSupportedVendors } from './vendorDetector.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -140,6 +141,43 @@ app.post('/api/parse-pdf', upload.single('file'), async (req, res) => {
     
     res.status(500).json({ 
       error: 'Failed to parse PDF',
+      message: error.message 
+    });
+  }
+});
+
+// Shoot list upload endpoint
+app.post('/api/parse-shootlist', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const filePath = req.file.path;
+    
+    // Parse the shoot list PDF
+    const result = await parseShootListPDF(filePath);
+    
+    // Clean up the file after parsing
+    await fs.unlink(filePath).catch(() => {});
+    
+    // Return result
+    res.json({
+      items: result.items,
+      showInfo: result.showInfo,
+      fileName: req.file.originalname
+    });
+    
+  } catch (error) {
+    console.error('Shoot list parsing error:', error);
+    
+    // Clean up file on error
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to parse shoot list',
       message: error.message 
     });
   }

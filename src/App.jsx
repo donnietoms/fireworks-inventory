@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { useInventory } from './hooks/useInventory';
 import { useOrders } from './hooks/useOrders';
+import { useShows } from './hooks/useShows';
 import { API_BASE_URL } from './config';
-import InventoryTable from './components/InventoryTable';
+import CurrentInventory from './components/CurrentInventory';
+import InventoryList from './components/InventoryList';
+import InventoryDetails from './components/InventoryDetails';
 import OrdersTable from './components/OrdersTable';
+import ShowsTable from './components/ShowsTable';
+import ShowDetailsTable from './components/ShowDetailsTable';
 import FileUpload from './components/FileUpload';
 import AddItemModal from './components/AddItemModal';
 import AddOrderModal from './components/AddOrderModal';
+import OrdersDebugPanel from './components/OrdersDebugPanel';
 import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './App.css';
@@ -34,9 +40,21 @@ function App() {
     clearOrders
   } = useOrders();
   
+  const {
+    shows,
+    loading: showsLoading,
+    addShow,
+    updateShow,
+    deleteShow,
+    clearShows
+  } = useShows();
+  
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState('current-inventory');
+  const [selectedShowId, setSelectedShowId] = useState(null);
+  const [selectedPartNumber, setSelectedPartNumber] = useState(null);
+  const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
 
   const handleExport = (format) => {
     if (inventory.length === 0) {
@@ -80,15 +98,37 @@ function App() {
     }
   };
 
-  const handleInvoiceUpload = (items, fileName, orderInfo) => {
+  const handleInvoiceUpload = async (items, fileName, orderInfo) => {
     // Get order number
     const orderNumber = orderInfo?.orderNumber || fileName;
     
     // Check if order already exists
     const existingOrder = orders.find(o => o.orderNumber === orderNumber);
     if (existingOrder) {
-      alert(`Order ${orderNumber} already exists!\n\nPlease use a different order number or delete the existing order first.`);
-      return { warnings: [{ error: 'Duplicate order number' }] };
+      const choice = window.confirm(
+        `Order ${orderNumber} already exists!\n\n` +
+        `Click OK to DELETE the existing order and replace with new data.\n` +
+        `Click Cancel to keep the existing order and abort this upload.`
+      );
+      
+      if (choice) {
+        // Delete existing order and its inventory
+        deleteOrder(existingOrder.id);
+        deleteItemsByOrder(orderNumber);
+        
+        // Delete the invoice file if it exists
+        if (existingOrder.invoiceFile) {
+          try {
+            await fetch(`${API_BASE_URL}/api/invoice/${existingOrder.invoiceFile}`, {
+              method: 'DELETE'
+            });
+          } catch (error) {
+            console.error('Failed to delete old invoice file:', error);
+          }
+        }
+      } else {
+        return { warnings: [{ error: 'Upload cancelled - duplicate order' }] };
+      }
     }
     
     // Add items to inventory with order number
@@ -99,9 +139,9 @@ function App() {
       addOrder({
         vendor: orderInfo.vendor || 'Unknown',
         orderNumber: orderNumber,
-        subtotal: orderInfo.subtotal || items.reduce((sum, item) => sum + (item.quantity * item.cost), 0),
+        subtotal: orderInfo.subtotal || 0,
         discount: orderInfo.discount || 0,
-        total: orderInfo.total || items.reduce((sum, item) => sum + (item.quantity * item.cost), 0),
+        total: orderInfo.total || 0,
         invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
         originalFileName: fileName
       });
@@ -133,7 +173,104 @@ function App() {
     }
   };
 
-  if (loading || ordersLoading) {
+  const handleShootListUpload = (items, fileName, showInfo) => {
+    const showName = showInfo?.name || fileName;
+    
+    // Check if show already exists
+    const existingShow = shows.find(s => s.name === showName);
+    if (existingShow) {
+      const choice = window.confirm(
+        `Show "${showName}" already exists!\n\n` +
+        `Click OK to DELETE the existing show and replace with new data.\n` +
+        `Click Cancel to keep the existing show and abort this upload.\n\n` +
+        `Note: Deleting the show will NOT restore inventory (items remain marked as used).`
+      );
+      
+      if (choice) {
+        // Delete existing show
+        deleteShow(existingShow.id);
+      } else {
+        return { warnings: [{ error: 'Upload cancelled - duplicate show' }] };
+      }
+    }
+    
+    // Cross-reference items with inventory to get cost
+    const enrichedItems = items.map(item => {
+      // Find all matching inventory items by part number
+      const inventoryItems = inventory.filter(invItem => 
+        invItem.partNumber === item.partNumber
+      );
+      
+      // Calculate weighted average cost from all matching inventory items
+      let totalCost = 0;
+      let totalQty = 0;
+      
+      inventoryItems.forEach(invItem => {
+        totalCost += invItem.cost * invItem.quantity;
+        totalQty += invItem.quantity;
+      });
+      
+      const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+      
+      return {
+        ...item,
+        cost: parseFloat(avgCost.toFixed(2)), // Weighted average cost
+        inInventory: inventoryItems.length > 0,
+        availableQuantity: totalQty
+      };
+    });
+    
+    // Create show record with enriched items
+    const showId = addShow({
+      name: showName,
+      date: showInfo?.date || new Date().toISOString(),
+      location: showInfo?.location || '',
+      items: enrichedItems
+    });
+    
+    // Subtract items from inventory
+    const result = subtractFromShootList(enrichedItems, fileName);
+    
+    return result;
+  };
+
+  const handleDeleteShow = (showId) => {
+    // TODO: Return items back to inventory when show is deleted
+    deleteShow(showId);
+  };
+
+  const handleViewShowDetails = (showId) => {
+    setSelectedShowId(showId);
+    setActiveTab('show-details');
+  };
+
+  const handleBackToShows = () => {
+    setSelectedShowId(null);
+    setActiveTab('shows');
+  };
+
+  const handleViewInventoryDetails = (partNumber) => {
+    setSelectedPartNumber(partNumber);
+    setActiveTab('inventory-details');
+  };
+
+  const handleBackToInventory = () => {
+    setSelectedPartNumber(null);
+    setActiveTab('inventory');
+  };
+
+  const handleViewOrderInventory = (orderNumber) => {
+    setSelectedOrderNumber(orderNumber);
+    setSelectedPartNumber(null);
+    setActiveTab('inventory');
+  };
+
+  const handleBackToOrders = () => {
+    setSelectedOrderNumber(null);
+    setActiveTab('orders');
+  };
+
+  if (loading || ordersLoading || showsLoading) {
     return <div className="loading">Loading...</div>;
   }
 
@@ -173,16 +310,22 @@ function App() {
 
       <nav className="tab-nav">
         <button 
-          className={`tab ${activeTab === 'inventory' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inventory')}
+          className={`tab ${activeTab === 'current-inventory' ? 'active' : ''}`}
+          onClick={() => setActiveTab('current-inventory')}
         >
-          Inventory
+          Current Inventory
         </button>
         <button 
           className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
           onClick={() => setActiveTab('orders')}
         >
           Orders
+        </button>
+        <button 
+          className={`tab ${activeTab === 'shows' || activeTab === 'show-details' ? 'active' : ''}`}
+          onClick={() => setActiveTab('shows')}
+        >
+          Shows
         </button>
         <button 
           className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
@@ -193,12 +336,34 @@ function App() {
       </nav>
 
       <main className="main-content">
-        {activeTab === 'inventory' && (
-          <InventoryTable
+        {activeTab === 'current-inventory' && (
+          <CurrentInventory
             inventory={inventory}
+            shows={shows}
+          />
+        )}
+
+        {activeTab === 'inventory' && (
+          <InventoryList
+            inventory={inventory.filter(item => 
+              !selectedOrderNumber || item.orderNumber === selectedOrderNumber
+            )}
+            orderNumber={selectedOrderNumber}
+            onViewDetails={handleViewInventoryDetails}
+            onBack={selectedOrderNumber ? handleBackToOrders : null}
+          />
+        )}
+
+        {activeTab === 'inventory-details' && (
+          <InventoryDetails
+            partNumber={selectedPartNumber}
+            inventory={inventory.filter(item => 
+              !selectedOrderNumber || item.orderNumber === selectedOrderNumber
+            )}
+            orderNumber={selectedOrderNumber}
+            onBack={handleBackToInventory}
             onUpdate={updateItem}
             onDelete={deleteItem}
-            onOrderClick={() => setActiveTab('orders')}
           />
         )}
 
@@ -213,8 +378,24 @@ function App() {
               orders={orders}
               onUpdate={updateOrder}
               onDelete={handleDeleteOrder}
+              onViewInventory={handleViewOrderInventory}
             />
           </>
+        )}
+
+        {activeTab === 'shows' && (
+          <ShowsTable
+            shows={shows}
+            onDeleteShow={handleDeleteShow}
+            onViewDetails={handleViewShowDetails}
+          />
+        )}
+
+        {activeTab === 'show-details' && (
+          <ShowDetailsTable
+            show={shows.find(s => s.id === selectedShowId)}
+            onBack={handleBackToShows}
+          />
         )}
 
         {activeTab === 'upload' && (
@@ -223,12 +404,14 @@ function App() {
               <FileUpload
                 type="invoice"
                 onUpload={handleInvoiceUpload}
+                inventory={inventory}
               />
             </div>
             <div className="upload-column">
               <FileUpload
                 type="shootList"
-                onUpload={subtractFromShootList}
+                onUpload={handleShootListUpload}
+                inventory={inventory}
               />
             </div>
           </div>
@@ -247,6 +430,8 @@ function App() {
         onAdd={addOrder}
         existingOrders={orders}
       />
+
+      <OrdersDebugPanel />
     </div>
   );
 }

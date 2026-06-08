@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { API_BASE_URL } from '../config';
 import './OrdersTable.css';
 
-const OrdersTable = ({ orders, onUpdate, onDelete }) => {
+const OrdersTable = ({ orders, onUpdate, onDelete, onViewInventory }) => {
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filter, setFilter] = useState('');
@@ -117,10 +117,22 @@ const OrdersTable = ({ orders, onUpdate, onDelete }) => {
           className="search-input"
         />
         <div className="table-stats">
-          <span>{displayedOrders.length} orders</span>
-          <span>Subtotal: ${totals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <span>Discount: ${totals.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <span>Total: ${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <div className="stat-item">
+            <span className="stat-label">Orders:</span>
+            <span className="stat-value">{displayedOrders.length}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Subtotal:</span>
+            <span className="stat-value">${totals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Discount:</span>
+            <span className="stat-value">${totals.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Total:</span>
+            <span className="stat-value">${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
         </div>
       </div>
       
@@ -222,6 +234,13 @@ const OrdersTable = ({ orders, onUpdate, onDelete }) => {
                       <td className="amount">${order.discount.toFixed(2)}</td>
                       <td className="amount total">${order.total.toFixed(2)}</td>
                       <td className="actions">
+                        <button 
+                          onClick={() => onViewInventory(order.orderNumber)} 
+                          className="btn-inventory" 
+                          title="View Inventory"
+                        >
+                          📦
+                        </button>
                         {order.invoiceFile && (
                           <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
                             📄
