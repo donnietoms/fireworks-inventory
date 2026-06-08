@@ -1,40 +1,20 @@
-# Multi-stage build for Render.com
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install ALL dependencies (including devDependencies needed for build)
-RUN npm install --include=dev
-
-# Copy source
-COPY . .
-
-# Build frontend
-RUN npm run build
-
-# Production stage
+# Use Node.js base image
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install serve globally
-RUN npm install -g serve
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
 
-# Copy built files and server
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/node_modules ./node_modules
+# Copy all source code
+COPY . .
 
-# Create startup script
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'cd /app/server && node index.js &' >> /app/start.sh && \
-    echo 'cd /app && serve -s dist -l ${PORT:-10000}' >> /app/start.sh && \
-    chmod +x /app/start.sh
+# Build the frontend
+RUN npm run build
 
-# Expose Render's dynamic port
-EXPOSE ${PORT:-10000}
+# Expose the port
+EXPOSE 10000
 
-CMD ["/app/start.sh"]
+# Start script: run backend server and serve frontend
+CMD sh -c "node server/index.js & npx serve -s dist -l $PORT"
