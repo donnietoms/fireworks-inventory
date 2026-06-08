@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { parseFile } from '../utils/fileParser';
 import { parseVendorFile } from '../utils/vendorParsers';
 import { useVendors } from '../hooks/useVendors';
+import { API_BASE_URL } from '../config';
 import './FileUpload.css';
 
 const FileUpload = ({ type, onUpload, disabled }) => {
@@ -50,7 +51,7 @@ const FileUpload = ({ type, onUpload, disabled }) => {
           formData.append('vendor', vendorToUse);
         }
         
-        const response = await fetch('http://localhost:3001/api/parse-pdf', {
+        const response = await fetch(`${API_BASE_URL}/api/parse-pdf`, {
           method: 'POST',
           body: formData
         });
