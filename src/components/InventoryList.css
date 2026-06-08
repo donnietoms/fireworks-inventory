@@ -63,6 +63,7 @@
   border-collapse: collapse;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  table-layout: fixed;
 }
 
 .inventory-list-table th,
@@ -127,6 +128,11 @@
   padding-top: 16px;
   white-space: nowrap;
   text-align: left;
+  vertical-align: middle;
+}
+
+.inventory-list-table .totals-row {
+  display: table-row;
 }
 
 .empty-state {
