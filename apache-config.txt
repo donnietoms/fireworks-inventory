@@ -1,0 +1,54 @@
+# Apache Configuration for Dreamhost
+# Add this to your .htaccess or virtual host config
+
+## Option 1: Subdomain Setup (Recommended)
+## inventory.kcap.club
+
+# In Dreamhost Panel:
+# 1. Go to Domains > Manage Domains
+# 2. Add subdomain: inventory.kcap.club
+# 3. Point to: /home/YOUR_USERNAME/fireworks-inventory/dist
+# 4. Enable HTTPS
+
+# Create .htaccess in /home/YOUR_USERNAME/inventory.kcap.club/
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # API Proxy - Forward /api to backend
+  RewriteCond %{REQUEST_URI} ^/api
+  RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
+  
+  # Frontend - Serve React app
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+## Option 2: Subdirectory Setup
+## kcap.club/inventory
+
+# Add to main .htaccess in /home/YOUR_USERNAME/kcap.club/
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # API Proxy
+  RewriteRule ^inventory/api/(.*)$ http://localhost:3001/api/$1 [P,L]
+  
+  # Frontend
+  RewriteCond %{REQUEST_URI} ^/inventory
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^inventory/(.*)$ /home/YOUR_USERNAME/fireworks-inventory/dist/$1 [L]
+</IfModule>
+
+## Enable Proxy Module (if needed)
+# Contact Dreamhost support to enable mod_proxy if you get errors
+
+## CORS Headers (add to .htaccess)
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+  Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+  Header set Access-Control-Allow-Headers "Content-Type"
+</IfModule>

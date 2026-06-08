@@ -1,0 +1,168 @@
+.orders-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+/* Column width distribution */
+.orders-table th:nth-child(1), /* Date */
+.orders-table td:nth-child(1) {
+  width: 15%;
+  min-width: 140px;
+}
+
+.orders-table th:nth-child(2), /* Vendor */
+.orders-table td:nth-child(2) {
+  width: 20%;
+  min-width: 150px;
+}
+
+.orders-table th:nth-child(3), /* Order Number */
+.orders-table td:nth-child(3) {
+  width: 15%;
+  min-width: 120px;
+}
+
+.orders-table th:nth-child(4), /* Subtotal */
+.orders-table td:nth-child(4),
+.orders-table th:nth-child(5), /* Discount */
+.orders-table td:nth-child(5),
+.orders-table th:nth-child(6), /* Total */
+.orders-table td:nth-child(6) {
+  width: 12%;
+  min-width: 100px;
+}
+
+.orders-table th:nth-child(7), /* Actions */
+.orders-table td:nth-child(7) {
+  width: 16%;
+  min-width: 150px;
+}
+
+.orders-table th {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 2px solid #e0e0e0;
+  vertical-align: top;
+  font-size: 15px;
+}
+
+.orders-table th:hover {
+  background: #eee;
+}
+
+.orders-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.orders-table tr:hover {
+  background: #fafafa;
+}
+
+.amount {
+  text-align: right;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.amount.total {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.sort-icon {
+  margin-left: 6px;
+  color: #999;
+  font-size: 12px;
+}
+
+.sort-icon.active {
+  color: #ff6b35;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions button {
+  padding: 4px 10px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.btn-edit {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-edit:hover {
+  background: #bbdefb;
+}
+
+.btn-delete {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.btn-delete:hover {
+  background: #ffcdd2;
+}
+
+.btn-save {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.btn-save:hover {
+  background: #c8e6c9;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 40px !important;
+  font-style: italic;
+}

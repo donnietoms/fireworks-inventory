@@ -1,0 +1,260 @@
+.inventory-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table-controls {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 300px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+}
+
+.table-stats {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.table-stats span {
+  padding: 4px 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Column width distribution */
+.inventory-table th:nth-child(1), /* Part Number */
+.inventory-table td:nth-child(1) {
+  width: 12%;
+}
+
+.inventory-table th:nth-child(2), /* Description */
+.inventory-table td:nth-child(2) {
+  width: 42%;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.inventory-table th:nth-child(3), /* Order Number */
+.inventory-table td:nth-child(3) {
+  width: 10%;
+}
+
+.inventory-table th:nth-child(4), /* Quantity */
+.inventory-table td:nth-child(4) {
+  width: 10%;
+}
+
+.inventory-table th:nth-child(5), /* Cost */
+.inventory-table td:nth-child(5) {
+  width: 10%;
+}
+
+.inventory-table th:nth-child(6), /* Actions */
+.inventory-table td:nth-child(6) {
+  width: 16%;
+}
+
+.inventory-table th {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 2px solid #e0e0e0;
+  vertical-align: top;
+}
+
+.inventory-table th:hover {
+  background: #eee;
+}
+
+.sort-icon {
+  margin-left: 6px;
+  color: #999;
+  font-size: 12px;
+}
+
+.sort-icon.active {
+  color: #ff6b35;
+}
+
+.inventory-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+  line-height: 1.5;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Description column should wrap, not truncate */
+.inventory-table td:nth-child(2) {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Increase font size for better readability */
+.inventory-table th {
+  font-size: 15px;
+}
+
+/* Make part numbers and descriptions more readable */
+.inventory-table td:nth-child(1), /* Part Number */
+.inventory-table td:nth-child(2) { /* Description */
+  font-size: 14px;
+}
+
+.inventory-table tr:hover {
+  background: #fafafa;
+}
+
+.inventory-table tr.out-of-stock {
+  background: #ffebee;
+}
+
+.inventory-table tr.out-of-stock:hover {
+  background: #ffcdd2;
+}
+
+.inventory-table tr.low-stock {
+  background: #fff8e1;
+}
+
+.inventory-table tr.low-stock:hover {
+  background: #ffecb3;
+}
+
+.quantity {
+  text-align: right;
+  font-weight: 500;
+}
+
+.cost {
+  text-align: right;
+  font-family: monospace;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions button {
+  padding: 4px 10px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.btn-edit {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-edit:hover {
+  background: #bbdefb;
+}
+
+.btn-delete {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.btn-delete:hover {
+  background: #ffcdd2;
+}
+
+.btn-save {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.btn-save:hover {
+  background: #c8e6c9;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 36px;
+}
+
+/* Description input should be textarea-like */
+.inventory-table td:nth-child(2) .edit-input {
+  min-height: 60px;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 40px !important;
+  font-style: italic;
+}
+
+/* Order number link */
+.order-number {
+  color: #1976d2;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.order-number:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}
