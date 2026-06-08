@@ -531,7 +531,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                           <td>
                             {packing.total !== null 
                               ? `${item.cases} cases × ${packing.total} = ${qty} shells`
-                              : `${item.cases || '?'} cases × ? = ? shells (enter packing)`
+                              : `${item.cases || '?'} units`
                             }
                           </td>
                           <td>${cost !== null && !isNaN(cost) ? cost.toFixed(2) : '?'}</td>
