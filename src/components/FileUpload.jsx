@@ -143,12 +143,12 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         if (packingEdits[item.partNumber]) {
           const { packagesPerCase, itemsPerPackage } = packingEdits[item.partNumber];
           const totalPacking = packagesPerCase * itemsPerPackage;
-          const totalShells = item.casesOrdered * totalPacking;
+          const totalShells = item.cases * totalPacking;
           const costPerShell = item.cost / totalPacking; // item.cost is currently per case for missing packing
           
           return {
             ...item,
-            cases: item.casesOrdered, // Number of cases
+            cases: item.cases, // Number of cases
             packing: totalPacking, // Total items per case (numeric)
             packagesPerCase,
             itemsPerPackage,
@@ -263,7 +263,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     }
     // Otherwise calculate from cases and packing
     const packing = getEffectivePacking(item);
-    return item.casesOrdered * packing.total;
+    if (packing.total === null) return null;
+    return item.cases * packing.total;
   };
 
   const getEffectiveCost = (item) => {
@@ -524,8 +525,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                           </td>
                           <td>
                             {packing.total !== null 
-                              ? `${item.casesOrdered} cases × ${packing.total} = ${qty} shells`
-                              : `${item.casesOrdered} cases × ? = ? shells (enter packing)`
+                              ? `${item.cases} cases × ${packing.total} = ${qty} shells`
+                              : `${item.cases || '?'} cases × ? = ? shells (enter packing)`
                             }
                           </td>
                           <td>${cost !== null && !isNaN(cost) ? cost.toFixed(2) : '?'}</td>
