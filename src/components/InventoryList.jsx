@@ -18,11 +18,13 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
         partNumber: item.partNumber,
         description: item.description,
         items: [],
+        totalCases: 0,
         totalQuantity: 0,
         totalValue: 0
       };
     }
     acc[key].items.push(item);
+    acc[key].totalCases += item.cases || 0;
     acc[key].totalQuantity += item.quantity;
     // Use lineTotal if available, otherwise calculate from quantity * cost
     acc[key].totalValue += item.lineTotal || (item.quantity * item.cost);
@@ -84,13 +86,14 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
         <table className="inventory-list-table">
           <thead>
             <tr>
-              <th>Part Number</th>
+              <th style={{width: '100px'}}>Part Number</th>
               <th>Description</th>
-              <th>Packing</th>
-              <th>Total Quantity</th>
-              <th>Avg Cost/Unit</th>
-              <th>Total Value</th>
-              <th>Actions</th>
+              <th style={{width: '80px'}}>Packing</th>
+              <th style={{width: '100px'}}>Qty Ordered</th>
+              <th style={{width: '100px'}}>Total Qty</th>
+              <th style={{width: '100px'}}>Avg Cost</th>
+              <th style={{width: '100px'}}>Total Value</th>
+              <th style={{width: '80px'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -106,6 +109,7 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
                 </td>
                 <td className="description-cell">{item.description}</td>
                 <td>{item.packing}</td>
+                <td>{item.totalCases}</td>
                 <td>{item.totalQuantity}</td>
                 <td>{formatCurrency(item.avgCost)}</td>
                 <td>{formatCurrency(item.totalValue)}</td>
@@ -123,7 +127,8 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td colSpan="2"><strong>TOTALS</strong></td>
+              <td colSpan="3"><strong>TOTALS</strong></td>
+              <td></td>
               <td><strong>{totalItems}</strong></td>
               <td></td>
               <td><strong>{formatCurrency(totalValue)}</strong></td>
