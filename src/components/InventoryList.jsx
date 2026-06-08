@@ -32,9 +32,16 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
   // Convert to array and calculate weighted average cost
   const summaryData = Object.values(groupedInventory).map(group => {
     const avgCost = group.totalQuantity > 0 ? group.totalValue / group.totalQuantity : 0;
+    // Get packing from first item (all items in same order should have same packing)
+    const firstItem = group.items[0];
+    const packing = firstItem.cases && firstItem.packing 
+      ? `${firstItem.cases}/${firstItem.packing}` 
+      : '-';
+    
     return {
       ...group,
       avgCost,
+      packing,
       orderCount: group.items.length
     };
   });
@@ -79,6 +86,7 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
             <tr>
               <th>Part Number</th>
               <th>Description</th>
+              <th>Packing</th>
               <th>Total Quantity</th>
               <th>Avg Cost/Unit</th>
               <th>Total Value</th>
@@ -97,6 +105,7 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
                   </button>
                 </td>
                 <td className="description-cell">{item.description}</td>
+                <td>{item.packing}</td>
                 <td>{item.totalQuantity}</td>
                 <td>{formatCurrency(item.avgCost)}</td>
                 <td>{formatCurrency(item.totalValue)}</td>
