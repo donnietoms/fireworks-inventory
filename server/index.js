@@ -2,9 +2,13 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { parsePDF } from './parsers/index.js';
 import { detectVendor, getSupportedVendors } from './vendorDetector.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -99,6 +103,17 @@ app.post('/api/parse-pdf', upload.single('file'), async (req, res) => {
 
 // Create upload directory
 await fs.mkdir('/tmp/fireworks-uploads', { recursive: true });
+
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production' || process.env.PORT) {
+  const distPath = path.join(__dirname, '../dist');
+  app.use(express.static(distPath));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`PDF parser server running on http://localhost:${PORT}`);

@@ -3,7 +3,7 @@ services:
     name: fireworks-inventory
     env: node
     buildCommand: npm install && npm run build
-    startCommand: node server/index.js & npx serve -s dist -l $PORT
+    startCommand: NODE_ENV=production node server/index.js
     envVars:
       - key: NODE_VERSION
         value: 20
