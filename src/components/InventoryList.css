@@ -125,6 +125,8 @@
 .inventory-list-table .totals-row td {
   border-top: 2px solid #333;
   padding-top: 16px;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .empty-state {
