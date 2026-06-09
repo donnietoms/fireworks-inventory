@@ -15,13 +15,17 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [needsVendorSelection, setNeedsVendorSelection] = useState(false);
   const [previewVendor, setPreviewVendor] = useState(null); // Vendor selected in preview
   const [packingEdits, setPackingEdits] = useState({}); // Store packing edits: { partNumber: { packagesPerCase, itemsPerPackage } }
+  const [isGenericImport, setIsGenericImport] = useState(false); // Track if this is a generic import
+  const [genericOrderNumber, setGenericOrderNumber] = useState('');
+  const [genericVendor, setGenericVendor] = useState('');
+  const [genericOrderDate, setGenericOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
   const isInvoice = type === 'invoice';
   const title = isInvoice ? 'Upload Invoice' : 'Upload Shoot List';
   const description = isInvoice 
-    ? 'Add inventory from invoice (PDF/Excel, CSV, JSON)'
+    ? 'Add inventory from invoice (PDF from vendor or generic CSV/Excel)'
     : 'Subtract used items from shoot list (PDF, Excel, CSV, JSON)';
 
   const handleDrag = (e) => {
@@ -110,6 +114,17 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       setColumnMapping(result.columnMap || {});
       setPreviewVendor(result.vendor || result.detectedVendor);
       
+      // Check if this is a generic import (CSV/Excel without vendor info)
+      const fileName = file.name.toLowerCase();
+      const isCSVOrExcel = fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+      const hasVendorInfo = result.vendor || result.detectedVendor || result.orderInfo;
+      
+      if (isInvoice && isCSVOrExcel && !hasVendorInfo) {
+        setIsGenericImport(true);
+      } else {
+        setIsGenericImport(false);
+      }
+      
       // Set detected vendor for display
       if (result.detectedVendor) {
         setDetectedVendor(result.detectedVendor);
@@ -138,6 +153,18 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
 
   const handleConfirm = () => {
     if (preview) {
+      // For generic imports, validate required fields
+      if (isGenericImport) {
+        if (!genericOrderNumber.trim()) {
+          alert('Please enter an order number');
+          return;
+        }
+        if (!genericVendor.trim()) {
+          alert('Please enter a vendor name');
+          return;
+        }
+      }
+      
       // Apply packing edits to items before uploading (invoices only)
       const updatedItems = isInvoice ? preview.items.map(item => {
         if (packingEdits[item.partNumber]) {
@@ -160,8 +187,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         return item;
       }) : preview.items;
       
-      // Check if any items still need packing (invoices only)
-      if (isInvoice) {
+      // Check if any items still need packing (invoices only, but not for generic imports)
+      if (isInvoice && !isGenericImport) {
         const stillNeedPacking = updatedItems.filter(i => i.needsPacking);
         if (stillNeedPacking.length > 0) {
           alert(`Please enter packing format for all items:\n${stillNeedPacking.map(i => i.partNumber).join(', ')}`);
@@ -169,15 +196,28 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         }
       }
       
-      // Pass order info if it's an invoice upload
-      const orderInfo = isInvoice && preview.orderInfo ? {
-        vendor: preview.vendor,
-        orderNumber: preview.orderInfo.orderNumber,
-        subtotal: preview.orderInfo.subtotal,
-        discount: preview.orderInfo.discount,
-        total: preview.orderInfo.total,
-        savedFileName: preview.savedFileName // Include saved filename
-      } : null;
+      // Create order info for generic imports or use existing orderInfo
+      let orderInfo;
+      if (isGenericImport) {
+        const totalValue = updatedItems.reduce((sum, item) => sum + (item.quantity * item.cost), 0);
+        orderInfo = {
+          vendor: genericVendor.trim(),
+          orderNumber: genericOrderNumber.trim(),
+          orderDate: genericOrderDate,
+          subtotal: totalValue,
+          discount: 0,
+          total: totalValue
+        };
+      } else if (isInvoice && preview.orderInfo) {
+        orderInfo = {
+          vendor: preview.vendor,
+          orderNumber: preview.orderInfo.orderNumber,
+          subtotal: preview.orderInfo.subtotal,
+          discount: preview.orderInfo.discount,
+          total: preview.orderInfo.total,
+          savedFileName: preview.savedFileName
+        };
+      }
       
       // Pass show info if it's a shoot list upload
       const showInfo = !isInvoice && preview.showInfo ? preview.showInfo : null;
@@ -203,6 +243,10 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     setPreview(null);
     setPreviewVendor(null);
     setPackingEdits({});
+    setIsGenericImport(false);
+    setGenericOrderNumber('');
+    setGenericVendor('');
+    setGenericOrderDate(new Date().toISOString().split('T')[0]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -374,6 +418,47 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                   ? '✓ Auto-detected' 
                   : '⚠ Changed from auto-detect'}
               </span>
+            </div>
+          )}
+          
+          {/* Generic Import Order Info Input */}
+          {isGenericImport && (
+            <div className="generic-order-info">
+              <h4>Order Information (Required)</h4>
+              <div className="order-info-grid">
+                <div className="form-group">
+                  <label htmlFor="generic-order-number">Order Number *</label>
+                  <input
+                    id="generic-order-number"
+                    type="text"
+                    value={genericOrderNumber}
+                    onChange={(e) => setGenericOrderNumber(e.target.value)}
+                    placeholder="e.g., PO-12345"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="generic-vendor">Vendor *</label>
+                  <input
+                    id="generic-vendor"
+                    type="text"
+                    value={genericVendor}
+                    onChange={(e) => setGenericVendor(e.target.value)}
+                    placeholder="e.g., Wisley, Kellner's"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="generic-order-date">Order Date *</label>
+                  <input
+                    id="generic-order-date"
+                    type="date"
+                    value={genericOrderDate}
+                    onChange={(e) => setGenericOrderDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
             </div>
           )}
           

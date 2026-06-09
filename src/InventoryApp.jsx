@@ -15,7 +15,6 @@ import AddItemModal from './components/AddItemModal';
 import AddOrderModal from './components/AddOrderModal';
 import ManualOrderModal from './components/ManualOrderModal';
 import ManualShowModal from './components/ManualShowModal';
-import GenericImportModal from './components/GenericImportModal';
 import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './InventoryApp.css';
@@ -57,7 +56,6 @@ function InventoryApp({ user }) {
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
   const [showManualOrderModal, setShowManualOrderModal] = useState(false);
   const [showManualShowModal, setShowManualShowModal] = useState(false);
-  const [showGenericImportModal, setShowGenericImportModal] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null); // Order being edited
   const [editingShow, setEditingShow] = useState(null); // Show being edited
   const [activeTab, setActiveTab] = useState('current-inventory');
@@ -344,17 +342,6 @@ function InventoryApp({ user }) {
     setActiveTab('orders');
   };
 
-  const handleGenericImport = (items, fileName, orderInfo) => {
-    // Add order first
-    addOrder(orderInfo);
-    
-    // Add items to inventory with generic import metadata
-    addFromInvoice(items, fileName, orderInfo.orderNumber, orderInfo.orderDate);
-    
-    // Switch to orders tab to see the imported order
-    setActiveTab('orders');
-  };
-
   const handleLogout = () => {
     if (confirm('Are you sure you want to log out?')) {
       localStorage.removeItem('user');
@@ -505,20 +492,6 @@ function InventoryApp({ user }) {
                 inventory={inventory}
               />
             </div>
-            <div className="upload-column generic-import-column">
-              <div className="upload-card">
-                <h2>Generic CSV/Excel Import</h2>
-                <p className="upload-description">
-                  Import inventory from a generic CSV or Excel file with Part Number, Description, Quantity, and Cost columns.
-                </p>
-                <button 
-                  onClick={() => setShowGenericImportModal(true)}
-                  className="btn-upload"
-                >
-                  📊 Import CSV/Excel
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </main>
@@ -558,12 +531,6 @@ function InventoryApp({ user }) {
         existingShows={shows}
         editingShow={editingShow}
         inventory={inventory}
-      />
-
-      <GenericImportModal
-        isOpen={showGenericImportModal}
-        onClose={() => setShowGenericImportModal(false)}
-        onImport={handleGenericImport}
       />
     </div>
   );

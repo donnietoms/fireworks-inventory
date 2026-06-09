@@ -248,6 +248,58 @@
   font-size: 14px;
 }
 
+.vendor-selection-required p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Generic Order Info Section */
+.generic-order-info {
+  background: #e7f3ff;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.generic-order-info h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.order-info-grid .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-info-grid label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.order-info-grid input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.order-info-grid input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
 /* Vendor Confirmation in Preview */
 .vendor-confirmation {
   margin-bottom: 16px;
@@ -319,4 +371,11 @@
 .order-detail.total .value {
   color: #2e7d32;
   font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
