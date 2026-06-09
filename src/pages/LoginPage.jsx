@@ -19,9 +19,9 @@ function LoginPage() {
     // For now, simulate login with demo admin account
     setTimeout(() => {
       // Check for demo admin account
-      if (email === 'admin' && password === 'admin') {
+      if (email === 'admin@fireworksinventory.com' && password === 'admin') {
         localStorage.setItem('user', JSON.stringify({ 
-          email: 'admin@fireworks.com', 
+          email: 'admin@fireworksinventory.com', 
           name: 'Admin User',
           role: 'admin'
         }));
@@ -54,7 +54,8 @@ function LoginPage() {
 
           <div className="demo-notice">
             <strong>Demo Account:</strong><br />
-            Email: <code>admin</code> | Password: <code>admin</code>
+            Email: <code>admin@fireworksinventory.com</code><br />
+            Password: <code>admin</code>
           </div>
 
           {error && <div className="error-message">{error}</div>}

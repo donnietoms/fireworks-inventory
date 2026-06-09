@@ -4,7 +4,7 @@
 
 For testing and demo purposes, use these credentials:
 
-**Email:** `admin`  
+**Email:** `admin@fireworksinventory.com`  
 **Password:** `admin`
 
 This will log you in as an admin user with full access to the inventory management app.
