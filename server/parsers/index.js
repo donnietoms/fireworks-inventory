@@ -5,6 +5,7 @@
 
 import { detectVendor } from '../vendorDetector.js';
 import { parseWisleyPDF } from './wisleyPdfParser.js';
+import { parseSpiritOf76PDF } from './spiritof76PdfParser.js';
 
 export async function parsePDF(pdfPath, vendorHint = null) {
   // Use vendor hint if provided, otherwise auto-detect
@@ -18,6 +19,9 @@ export async function parsePDF(pdfPath, vendorHint = null) {
   switch (vendor) {
     case 'wisley':
       return await parseWisleyPDF(pdfPath);
+    
+    case 'spiritof76':
+      return await parseSpiritOf76PDF(pdfPath);
     
     // Add more vendors here:
     // case 'other-vendor':

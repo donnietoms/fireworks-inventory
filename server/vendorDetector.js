@@ -18,6 +18,14 @@ export async function detectVendor(pdfPath) {
       return 'wisley';
     }
     
+    // Check for Spirit of 76
+    if (text.includes('6401 w. highway 40') ||
+        text.includes('columbia, mo, 65202') ||
+        text.includes('(573) 447-1776') ||
+        text.includes('boonville, mo, 65233')) {
+      return 'spiritof76';
+    }
+    
     // Add more vendors here
     // if (text.includes('other vendor name')) {
     //   return 'other-vendor';
@@ -38,6 +46,11 @@ export function getSupportedVendors() {
       id: 'wisley',
       name: 'Wisley Pyrotechnics',
       formats: ['pdf', 'xlsx', 'xls']
+    },
+    {
+      id: 'spiritof76',
+      name: 'Spirit of 76',
+      formats: ['pdf']
     }
     // Add more vendors as they're implemented
     // {
