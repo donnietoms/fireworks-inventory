@@ -238,12 +238,20 @@ function App() {
     // Subtract items from inventory
     const result = subtractFromShootList(enrichedItems, fileName);
     
+    // Switch to Current Inventory tab to see updated quantities
+    setActiveTab('current-inventory');
+    
     return result;
   };
 
   const handleDeleteShow = (showId) => {
-    // TODO: Return items back to inventory when show is deleted
-    deleteShow(showId);
+    if (confirm('Delete this show? Items will be returned to inventory.')) {
+      deleteShow(showId);
+      // Switch to Current Inventory tab to see updated quantities
+      if (activeTab === 'shows' && !selectedShowId) {
+        setActiveTab('current-inventory');
+      }
+    }
   };
 
   const handleManualOrderEntry = ({ order, items }) => {
@@ -285,6 +293,9 @@ function App() {
       addShow({ ...showData, id: editingShow.id }); // Keep same ID
       subtractFromShootList(showData.items, null, { ...showData, id: editingShow.id });
       setEditingShow(null);
+      setShowManualShowModal(false);
+      // Switch to Current Inventory to show updated quantities
+      setActiveTab('current-inventory');
     } else {
       // Creating new show
       addShow(showData);
