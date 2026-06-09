@@ -2,12 +2,10 @@ import { useState, useMemo } from 'react';
 import { API_BASE_URL } from '../config';
 import './OrdersTable.css';
 
-const OrdersTable = ({ orders, onUpdate, onDelete, onViewInventory }) => {
+const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) => {
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filter, setFilter] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [editValues, setEditValues] = useState({});
 
   // Filter and sort orders
   const displayedOrders = useMemo(() => {
@@ -52,33 +50,6 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onViewInventory }) => {
       setSortField(field);
       setSortDirection('asc');
     }
-  };
-
-  const startEdit = (order) => {
-    setEditingId(order.id);
-    setEditValues({
-      vendor: order.vendor || '',
-      orderNumber: order.orderNumber || '',
-      subtotal: order.subtotal || 0,
-      discount: order.discount || 0,
-      total: order.total || 0
-    });
-  };
-
-  const saveEdit = () => {
-    onUpdate(editingId, {
-      ...editValues,
-      subtotal: parseFloat(editValues.subtotal) || 0,
-      discount: parseFloat(editValues.discount) || 0,
-      total: parseFloat(editValues.total) || 0
-    });
-    setEditingId(null);
-    setEditValues({});
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditValues({});
   };
 
   const SortIcon = ({ field }) => {
@@ -171,86 +142,28 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onViewInventory }) => {
             ) : (
               displayedOrders.map(order => (
                 <tr key={order.id}>
-                  {editingId === order.id ? (
-                    <>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td>
-                        <input
-                          type="text"
-                          value={editValues.vendor}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, vendor: e.target.value }))}
-                          className="edit-input"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={editValues.orderNumber}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, orderNumber: e.target.value }))}
-                          className="edit-input"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editValues.subtotal}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, subtotal: e.target.value }))}
-                          className="edit-input"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editValues.discount}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, discount: e.target.value }))}
-                          className="edit-input"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editValues.total}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, total: e.target.value }))}
-                          className="edit-input"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="actions">
-                        <button onClick={saveEdit} className="btn-save">Save</button>
-                        <button onClick={cancelEdit} className="btn-cancel">Cancel</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td>{order.vendor}</td>
-                      <td>{order.orderNumber}</td>
-                      <td className="amount">${order.subtotal.toFixed(2)}</td>
-                      <td className="amount">${order.discount.toFixed(2)}</td>
-                      <td className="amount total">${order.total.toFixed(2)}</td>
-                      <td className="actions">
-                        <button 
-                          onClick={() => onViewInventory(order.orderNumber)} 
-                          className="btn-inventory" 
-                          title="View Inventory"
-                        >
-                          📦
-                        </button>
-                        {order.invoiceFile && (
-                          <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
-                            📄
-                          </button>
-                        )}
-                        <button onClick={() => startEdit(order)} className="btn-edit">Edit</button>
-                        <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
-                      </td>
-                    </>
-                  )}
+                  <td>{formatDate(order.createdAt)}</td>
+                  <td>{order.vendor}</td>
+                  <td>{order.orderNumber}</td>
+                  <td className="amount">${order.subtotal.toFixed(2)}</td>
+                  <td className="amount">${order.discount.toFixed(2)}</td>
+                  <td className="amount total">${order.total.toFixed(2)}</td>
+                  <td className="actions">
+                    <button 
+                      onClick={() => onViewInventory(order.orderNumber)} 
+                      className="btn-inventory" 
+                      title="View Inventory"
+                    >
+                      📦
+                    </button>
+                    {order.invoiceFile && (
+                      <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
+                        📄
+                      </button>
+                    )}
+                    <button onClick={() => onEdit(order)} className="btn-edit">Edit</button>
+                    <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
+                  </td>
                 </tr>
               ))
             )}

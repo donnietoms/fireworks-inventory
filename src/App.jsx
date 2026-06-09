@@ -54,6 +54,7 @@ function App() {
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
   const [showManualOrderModal, setShowManualOrderModal] = useState(false);
   const [showManualShowModal, setShowManualShowModal] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null); // Order being edited
   const [activeTab, setActiveTab] = useState('current-inventory');
   const [selectedShowId, setSelectedShowId] = useState(null);
   const [selectedPartNumber, setSelectedPartNumber] = useState(null);
@@ -245,11 +246,35 @@ function App() {
   };
 
   const handleManualOrderEntry = ({ order, items }) => {
-    // Add the order
-    addOrder(order);
+    if (editingOrder) {
+      // Update existing order
+      updateOrder(editingOrder.id, order);
+      
+      // Delete old inventory items for this order
+      deleteItemsByOrder(editingOrder.orderNumber);
+      
+      // Add new inventory items
+      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
+      
+      setEditingOrder(null);
+    } else {
+      // Add new order
+      addOrder(order);
+      
+      // Add all items to inventory
+      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
+    }
+  };
+
+  const handleEditOrder = (order) => {
+    // Get inventory items for this order
+    const orderItems = inventory.filter(item => item.orderNumber === order.orderNumber);
     
-    // Add all items to inventory
-    addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
+    setEditingOrder({
+      ...order,
+      items: orderItems
+    });
+    setShowManualOrderModal(true);
   };
 
   const handleManualShowEntry = (showData) => {
@@ -378,6 +403,7 @@ function App() {
               orders={orders}
               onUpdate={updateOrder}
               onDelete={handleDeleteOrder}
+              onEdit={handleEditOrder}
               onViewInventory={handleViewOrderInventory}
             />
           </>
@@ -443,9 +469,13 @@ function App() {
 
       <ManualOrderModal
         isOpen={showManualOrderModal}
-        onClose={() => setShowManualOrderModal(false)}
+        onClose={() => {
+          setShowManualOrderModal(false);
+          setEditingOrder(null);
+        }}
         onAdd={handleManualOrderEntry}
         existingOrders={orders}
+        editingOrder={editingOrder}
         inventory={inventory}
       />
 
