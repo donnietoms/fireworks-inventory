@@ -547,8 +547,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                       <th>Part Number</th>
                       <th>Description</th>
                       <th>Packing (Items/Case)</th>
-                      <th>Quantity (Shells)</th>
-                      <th>Cost/Shell</th>
+                      <th>Quantity (Items)</th>
+                      <th>Cost/Item</th>
                     </>
                   ) : (
                     <>
