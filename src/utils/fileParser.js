@@ -11,11 +11,14 @@ const normalizeColumnName = (name) => {
   if (!name) return '';
   const lower = name.toLowerCase().trim();
   
-  // Part Number variations
-  if (lower.includes('part') || lower.includes('sku') || lower.includes('item') || lower.includes('product') && lower.includes('number')) {
+  // Part Number variations (includes Product ID)
+  if (lower.includes('part') || lower.includes('sku') || lower.includes('item')) {
     return 'partNumber';
   }
-  if (lower === 'pn' || lower === 'p/n' || lower === 'item#' || lower === 'sku') {
+  if (lower.includes('product') && (lower.includes('id') || lower.includes('number'))) {
+    return 'partNumber';
+  }
+  if (lower === 'pn' || lower === 'p/n' || lower === 'item#' || lower === 'sku' || lower === 'id') {
     return 'partNumber';
   }
   

@@ -11,9 +11,10 @@ The app supports generic CSV imports with the following columns:
 ## Column Name Variations Supported
 The CSV parser automatically detects column names with variations:
 
-### Part Number
+### Part Number / Product ID
 - Part Number, PartNumber, Part #, P/N
-- SKU, Item Number, Item #, Product Number
+- Product ID, ProductID, Product Number
+- SKU, Item Number, Item #, ID
 
 ### Description
 - Description, Desc, Name, Title, Product Name
