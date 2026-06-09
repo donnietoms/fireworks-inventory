@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './ManualShowModal.css';
 
-const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory = [] }) => {
+const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingShow = null, inventory = [] }) => {
   const [showData, setShowData] = useState({
     name: '',
     date: new Date().toISOString().split('T')[0],
@@ -9,6 +9,7 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
   });
   
   const [items, setItems] = useState([]);
+  const [editingItemIndex, setEditingItemIndex] = useState(null); // Track which item is being edited
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
@@ -18,6 +19,26 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
   
   const [error, setError] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingShow) {
+      setShowData({
+        name: editingShow.name,
+        date: editingShow.date ? new Date(editingShow.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        location: editingShow.location || ''
+      });
+      setItems(editingShow.items || []);
+    } else {
+      // Reset form when not editing
+      setShowData({
+        name: '',
+        date: new Date().toISOString().split('T')[0],
+        location: ''
+      });
+      setItems([]);
+    }
+  }, [editingShow]);
 
   const handleShowChange = (field, value) => {
     setShowData(prev => ({ ...prev, [field]: value }));
@@ -78,7 +99,16 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
       cost: parseFloat(currentItem.cost) || 0
     };
 
-    setItems(prev => [...prev, newItem]);
+    if (editingItemIndex !== null) {
+      // Update existing item
+      const updatedItems = [...items];
+      updatedItems[editingItemIndex] = newItem;
+      setItems(updatedItems);
+      setEditingItemIndex(null);
+    } else {
+      // Add new item
+      setItems(prev => [...prev, newItem]);
+    }
     
     // Reset current item
     setCurrentItem({
@@ -89,6 +119,28 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
     });
     
     setError('');
+    setSearchResults([]);
+  };
+
+  const editItem = (index) => {
+    const item = items[index];
+    setCurrentItem({
+      partNumber: item.partNumber,
+      description: item.description,
+      quantity: item.quantity?.toString() || '',
+      cost: item.cost?.toString() || ''
+    });
+    setEditingItemIndex(index);
+  };
+
+  const cancelEdit = () => {
+    setCurrentItem({
+      partNumber: '',
+      description: '',
+      quantity: '',
+      cost: ''
+    });
+    setEditingItemIndex(null);
     setSearchResults([]);
   };
 
@@ -104,9 +156,10 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
       return;
     }
     
-    // Check for duplicate show name
+    // Check for duplicate show name (skip if editing the same show)
     const isDuplicate = existingShows.some(
-      show => show.name === showData.name
+      show => show.name === showData.name && 
+      (!editingShow || show.id !== editingShow.id)
     );
     
     if (isDuplicate) {
@@ -150,7 +203,7 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Manual Show Entry</h2>
+        <h2>{editingShow ? 'Edit Show' : 'Manual Show Entry'}</h2>
         {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
@@ -249,10 +302,18 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
                   min="0"
                 />
               </div>
-              <div className="form-group">
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
                 <button type="button" onClick={addItem} className="btn-add-item">
-                  + Add Item
+                  {editingItemIndex !== null ? '✓ Update Item' : '+ Add Item'}
                 </button>
+                {editingItemIndex !== null && (
+                  <button type="button" onClick={cancelEdit} className="btn-cancel">
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -274,13 +335,21 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
                 </thead>
                 <tbody>
                   {items.map((item, index) => (
-                    <tr key={index}>
+                    <tr key={index} style={editingItemIndex === index ? { backgroundColor: '#fff3cd' } : {}}>
                       <td>{item.partNumber}</td>
                       <td>{item.description}</td>
                       <td>{item.quantity}</td>
                       <td>${item.cost.toFixed(2)}</td>
                       <td>${(item.quantity * item.cost).toFixed(2)}</td>
                       <td>
+                        <button 
+                          type="button" 
+                          onClick={() => editItem(index)}
+                          className="btn-edit"
+                          style={{ marginRight: '5px' }}
+                        >
+                          ✏️
+                        </button>
                         <button 
                           type="button" 
                           onClick={() => removeItem(index)}
@@ -310,7 +379,7 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], inventory
               Cancel
             </button>
             <button type="submit" className="btn-submit">
-              Create Show
+              {editingShow ? 'Update Show' : 'Create Show'}
             </button>
           </div>
         </form>

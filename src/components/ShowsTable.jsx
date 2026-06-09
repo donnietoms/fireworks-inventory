@@ -1,7 +1,7 @@
 import React from 'react';
 import './ShowsTable.css';
 
-function ShowsTable({ shows, onDeleteShow, onViewDetails }) {
+function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
   if (shows.length === 0) {
     return (
       <div className="empty-state">
@@ -61,6 +61,13 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails }) {
                   title="View Details"
                 >
                   📋
+                </button>
+                <button
+                  className="btn-edit"
+                  onClick={() => onEdit(show)}
+                  title="Edit Show"
+                >
+                  ✏️
                 </button>
                 <button
                   className="btn-delete"

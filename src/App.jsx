@@ -55,6 +55,7 @@ function App() {
   const [showManualOrderModal, setShowManualOrderModal] = useState(false);
   const [showManualShowModal, setShowManualShowModal] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null); // Order being edited
+  const [editingShow, setEditingShow] = useState(null); // Show being edited
   const [activeTab, setActiveTab] = useState('current-inventory');
   const [selectedShowId, setSelectedShowId] = useState(null);
   const [selectedPartNumber, setSelectedPartNumber] = useState(null);
@@ -278,11 +279,23 @@ function App() {
   };
 
   const handleManualShowEntry = (showData) => {
-    // Add the show
-    addShow(showData);
-    
-    // Subtract items from inventory using FIFO
-    subtractFromShootList(showData.items, null, showData);
+    if (editingShow) {
+      // Editing existing show - delete old one and add new
+      deleteShow(editingShow.id); // This will return items to inventory
+      addShow({ ...showData, id: editingShow.id }); // Keep same ID
+      subtractFromShootList(showData.items, null, { ...showData, id: editingShow.id });
+      setEditingShow(null);
+    } else {
+      // Creating new show
+      addShow(showData);
+      subtractFromShootList(showData.items, null, showData);
+    }
+    setShowManualShowModal(false);
+  };
+
+  const handleEditShow = (show) => {
+    setEditingShow(show);
+    setShowManualShowModal(true);
   };
 
   const handleViewShowDetails = (showId) => {
@@ -423,6 +436,7 @@ function App() {
               shows={shows}
               onDeleteShow={handleDeleteShow}
               onViewDetails={handleViewShowDetails}
+              onEdit={handleEditShow}
             />
           </>
         )}
@@ -481,9 +495,13 @@ function App() {
 
       <ManualShowModal
         isOpen={showManualShowModal}
-        onClose={() => setShowManualShowModal(false)}
+        onClose={() => {
+          setShowManualShowModal(false);
+          setEditingShow(null);
+        }}
         onAdd={handleManualShowEntry}
         existingShows={shows}
+        editingShow={editingShow}
         inventory={inventory}
       />
     </div>
