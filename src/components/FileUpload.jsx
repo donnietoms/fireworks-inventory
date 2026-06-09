@@ -408,8 +408,20 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
               color: '#495057'
             }}>
               <strong>📋 CSV Import Format:</strong>
+              <p style={{ margin: '8px 0 4px 0' }}>
+                For generic CSV/Excel files, your file should have a header row with these columns:
+              </p>
+              <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
+                <li><strong>Part Number</strong> (or Product ID, SKU, Item #)</li>
+                <li><strong>Description</strong> (or Name, Title)</li>
+                <li><strong>Quantity</strong> (total items, not cases)</li>
+                <li><strong>Cost</strong> (price per item)</li>
+              </ul>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
+                Example: Part Number,Description,Quantity,Cost<br/>
+                GM123,"Red Peony",24,5.50
+              </p>
               <p style={{ margin: '8px 0 0 0' }}>
-                For generic CSV/Excel files, include these columns: <strong>Part Number</strong> (or Product ID), <strong>Description</strong>, <strong>Quantity</strong>, and <strong>Cost</strong>. 
                 You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
               </p>
             </div>
