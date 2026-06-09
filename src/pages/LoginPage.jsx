@@ -16,11 +16,23 @@ function LoginPage() {
     setLoading(true);
 
     // TODO: Replace with actual authentication
-    // For now, simulate login
+    // For now, simulate login with demo admin account
     setTimeout(() => {
-      if (email && password) {
-        // Mock successful login
-        localStorage.setItem('user', JSON.stringify({ email, name: email.split('@')[0] }));
+      // Check for demo admin account
+      if (email === 'admin' && password === 'admin') {
+        localStorage.setItem('user', JSON.stringify({ 
+          email: 'admin@fireworks.com', 
+          name: 'Admin User',
+          role: 'admin'
+        }));
+        navigate('/app');
+      } else if (email && password) {
+        // Any other email/password combination works for demo
+        localStorage.setItem('user', JSON.stringify({ 
+          email, 
+          name: email.split('@')[0],
+          role: 'user'
+        }));
         navigate('/app');
       } else {
         setError('Please enter email and password');
@@ -39,6 +51,11 @@ function LoginPage() {
         <div className="auth-card">
           <h1>Welcome Back</h1>
           <p className="auth-subtitle">Log in to your account</p>
+
+          <div className="demo-notice">
+            <strong>Demo Account:</strong><br />
+            Email: <code>admin</code> | Password: <code>admin</code>
+          </div>
 
           {error && <div className="error-message">{error}</div>}
 
