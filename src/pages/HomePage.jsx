@@ -25,7 +25,7 @@ function HomePage() {
         'Up to 1,500 inventory items',
         'Single user access',
         'Everything in Starter, plus:',
-        'PDF invoice parsing (all vendors)',
+        'PDF invoice parsing',
         'YouTube video integration',
         'Finale 3D exports'
       ],
