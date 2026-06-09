@@ -6,6 +6,21 @@ function CurrentInventory({ inventory, shows, orders }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFinaleDBModal, setShowFinaleDBModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [sortColumn, setSortColumn] = useState('partNumber'); // Default sort by part number
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  
+  // Handle column header click for sorting
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+  
   // Calculate current inventory with FIFO costing
   const currentInventory = useMemo(() => {
     // First, calculate how much of each product has been used in shows
@@ -95,6 +110,46 @@ function CurrentInventory({ inventory, shows, orders }) {
       item.description.toLowerCase().includes(search)
     );
   }, [currentInventory, searchTerm]);
+
+  // Sort filtered inventory
+  const sortedInventory = useMemo(() => {
+    const sorted = [...filteredInventory];
+    
+    sorted.sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortColumn) {
+        case 'partNumber':
+          aVal = a.partNumber.toLowerCase();
+          bVal = b.partNumber.toLowerCase();
+          break;
+        case 'description':
+          aVal = a.description.toLowerCase();
+          bVal = b.description.toLowerCase();
+          break;
+        case 'available':
+          aVal = a.available;
+          bVal = b.available;
+          break;
+        case 'avgCost':
+          aVal = a.avgCost;
+          bVal = b.avgCost;
+          break;
+        default:
+          return 0;
+      }
+      
+      // Compare values
+      let comparison = 0;
+      if (aVal < bVal) comparison = -1;
+      if (aVal > bVal) comparison = 1;
+      
+      // Apply sort direction
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }, [filteredInventory, sortColumn, sortDirection]);
 
   const formatCurrency = (value) => {
     return `$${value.toFixed(2)}`;
@@ -198,13 +253,13 @@ function CurrentInventory({ inventory, shows, orders }) {
     document.body.removeChild(link);
   };
 
-  // Calculate totals (use filtered inventory for displayed totals)
+  // Calculate totals (use sorted inventory for displayed totals)
   const totals = useMemo(() => {
-    return filteredInventory.reduce((acc, item) => ({
+    return sortedInventory.reduce((acc, item) => ({
       available: acc.available + item.available,
       value: acc.value + (item.available * item.avgCost)
     }), { available: 0, value: 0 });
-  }, [filteredInventory]);
+  }, [sortedInventory]);
 
   // Handle FinaleDB link
   const handleFinaleDBClick = (item) => {
@@ -282,15 +337,23 @@ function CurrentInventory({ inventory, shows, orders }) {
         <table className="current-inventory-table">
           <thead>
             <tr>
-              <th>Part Number</th>
-              <th>Description</th>
-              <th>Available</th>
-              <th>Avg Cost/Unit</th>
+              <th onClick={() => handleSort('partNumber')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Part Number {sortColumn === 'partNumber' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th onClick={() => handleSort('description')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Description {sortColumn === 'description' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Available {sortColumn === 'available' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
               <th>Links</th>
             </tr>
           </thead>
           <tbody>
-            {filteredInventory.map((item, index) => (
+            {sortedInventory.map((item, index) => (
               <tr key={index}>
                 <td>{item.partNumber}</td>
                 <td className="description-cell">{item.description}</td>
