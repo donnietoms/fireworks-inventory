@@ -615,7 +615,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                           </td>
                           <td>
                             {packing.total !== null 
-                              ? `${item.cases} cases × ${packing.total} = ${qty} shells`
+                              ? `${item.cases} cases × ${packing.total} = ${qty} items`
                               : `${item.cases || '?'} units`
                             }
                           </td>
