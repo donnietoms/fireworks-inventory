@@ -53,7 +53,13 @@ const mapRowToItem = (row, columnMap) => {
     partNumber: '',
     description: '',
     quantity: 0,
-    cost: 0
+    cost: 0,
+    // Default to 1/1 packing for generic imports (individual items)
+    cases: 0,
+    packagesPerCase: 1,
+    itemsPerPackage: 1,
+    packing: 1,
+    lineTotal: 0
   };
   
   for (const [originalCol, normalizedCol] of Object.entries(columnMap)) {
@@ -67,6 +73,12 @@ const mapRowToItem = (row, columnMap) => {
     } else if (normalizedCol === 'cost') {
       item.cost = parseNumber(value);
     }
+  }
+  
+  // For generic CSV import: quantity is total items, cases = quantity, packing = 1/1
+  if (item.quantity > 0) {
+    item.cases = item.quantity; // Each item is 1 "case"
+    item.lineTotal = item.cost * item.quantity; // Calculate line total from cost and quantity
   }
   
   return item;
