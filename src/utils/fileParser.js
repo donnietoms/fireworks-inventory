@@ -455,3 +455,143 @@ export const exportToExcel = (inventory) => {
   
   XLSX.writeFile(workbook, `fireworks_inventory_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
+
+// Export order to CSV
+export const exportOrderToCSV = (order) => {
+  const rows = [
+    ['Order Number', order.orderNumber],
+    ['Order Date', order.orderDate || 'N/A'],
+    ['Vendor', order.vendor || 'N/A'],
+    [''],
+    ['Part Number', 'Description', 'Packing', 'Qty Ordered', 'Total Items', 'Cost/Item', 'Line Total']
+  ];
+
+  order.items.forEach(item => {
+    rows.push([
+      item.partNumber,
+      item.description,
+      item.packagesPerCase && item.itemsPerPackage ? `${item.packagesPerCase}/${item.itemsPerPackage}` : '-',
+      item.cases || 0,
+      item.quantity || 0,
+      item.cost?.toFixed(4) || '0.0000',
+      item.lineTotal?.toFixed(2) || '0.00'
+    ]);
+  });
+
+  rows.push(['']);
+  rows.push(['Subtotal', '', '', '', '', '', order.subtotal?.toFixed(2) || '0.00']);
+  rows.push(['Discount', '', '', '', '', '', order.discount?.toFixed(2) || '0.00']);
+  rows.push(['Total', '', '', '', '', '', order.total?.toFixed(2) || '0.00']);
+
+  const csv = Papa.unparse(rows);
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `order_${order.orderNumber}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+// Export order to Excel
+export const exportOrderToExcel = (order) => {
+  const headerData = [
+    ['Order Number', order.orderNumber],
+    ['Order Date', order.orderDate || 'N/A'],
+    ['Vendor', order.vendor || 'N/A'],
+    []
+  ];
+
+  const itemsData = order.items.map(item => ({
+    'Part Number': item.partNumber,
+    'Description': item.description,
+    'Packing': item.packagesPerCase && item.itemsPerPackage ? `${item.packagesPerCase}/${item.itemsPerPackage}` : '-',
+    'Qty Ordered': item.cases || 0,
+    'Total Items': item.quantity || 0,
+    'Cost/Item': parseFloat(item.cost?.toFixed(4)) || 0,
+    'Line Total': parseFloat(item.lineTotal?.toFixed(2)) || 0
+  }));
+
+  const footerData = [
+    {},
+    { 'Part Number': 'Subtotal', 'Line Total': parseFloat(order.subtotal?.toFixed(2)) || 0 },
+    { 'Part Number': 'Discount', 'Line Total': parseFloat(order.discount?.toFixed(2)) || 0 },
+    { 'Part Number': 'Total', 'Line Total': parseFloat(order.total?.toFixed(2)) || 0 }
+  ];
+
+  const allData = [...headerData.map(row => ({ 'Part Number': row[0], 'Description': row[1] })), ...itemsData, ...footerData];
+  
+  const worksheet = XLSX.utils.json_to_sheet(allData, { skipHeader: false });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Order');
+  
+  XLSX.writeFile(workbook, `order_${order.orderNumber}_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+// Export show to CSV
+export const exportShowToCSV = (show) => {
+  const rows = [
+    ['Show Name', show.name],
+    ['Date', show.date || 'N/A'],
+    ['Location', show.location || 'N/A'],
+    [''],
+    ['Part Number', 'Description', 'Quantity', 'Cost', 'Total']
+  ];
+
+  show.items.forEach(item => {
+    rows.push([
+      item.partNumber,
+      item.description,
+      item.quantity || 0,
+      item.cost?.toFixed(2) || '0.00',
+      (item.quantity * item.cost)?.toFixed(2) || '0.00'
+    ]);
+  });
+
+  rows.push(['']);
+  rows.push(['Total Items', '', show.totalItems || 0, '', '']);
+  rows.push(['Total Value', '', '', '', show.totalValue?.toFixed(2) || '0.00']);
+
+  const csv = Papa.unparse(rows);
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `show_${show.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+// Export show to Excel
+export const exportShowToExcel = (show) => {
+  const headerData = [
+    ['Show Name', show.name],
+    ['Date', show.date || 'N/A'],
+    ['Location', show.location || 'N/A'],
+    []
+  ];
+
+  const itemsData = show.items.map(item => ({
+    'Part Number': item.partNumber,
+    'Description': item.description,
+    'Quantity': item.quantity || 0,
+    'Cost': parseFloat(item.cost?.toFixed(2)) || 0,
+    'Total': parseFloat((item.quantity * item.cost)?.toFixed(2)) || 0
+  }));
+
+  const footerData = [
+    {},
+    { 'Part Number': 'Total Items', 'Quantity': show.totalItems || 0 },
+    { 'Part Number': 'Total Value', 'Total': parseFloat(show.totalValue?.toFixed(2)) || 0 }
+  ];
+
+  const allData = [...headerData.map(row => ({ 'Part Number': row[0], 'Description': row[1] })), ...itemsData, ...footerData];
+  
+  const worksheet = XLSX.utils.json_to_sheet(allData, { skipHeader: false });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Show');
+  
+  XLSX.writeFile(workbook, `show_${show.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+};

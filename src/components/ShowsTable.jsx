@@ -1,4 +1,5 @@
 import React from 'react';
+import { exportShowToCSV, exportShowToExcel } from '../utils/fileParser';
 import './ShowsTable.css';
 
 function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
@@ -61,6 +62,20 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
                   title="View Details"
                 >
                   📋
+                </button>
+                <button 
+                  onClick={() => exportShowToCSV(show)} 
+                  className="btn-export" 
+                  title="Export to CSV"
+                >
+                  📥 CSV
+                </button>
+                <button 
+                  onClick={() => exportShowToExcel(show)} 
+                  className="btn-export" 
+                  title="Export to Excel"
+                >
+                  📥 XLS
                 </button>
                 <button
                   className="btn-edit"
