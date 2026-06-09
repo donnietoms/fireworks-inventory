@@ -150,6 +150,11 @@
   border-bottom: 1px solid #ddd;
 }
 
+.current-inventory-table th:last-child,
+.current-inventory-table td.actions-cell {
+  text-align: center;
+}
+
 .current-inventory-table th {
   background-color: #f8f9fa;
   font-weight: 600;
@@ -171,6 +176,32 @@
 .current-inventory-table .available-qty {
   font-weight: 600;
   color: #2e7d32;
+}
+
+.current-inventory-table .actions-cell {
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.btn-youtube {
+  padding: 6px 12px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-youtube:hover {
+  background-color: #cc0000;
+}
+
+.btn-youtube:active {
+  background-color: #990000;
 }
 
 .current-inventory-table tfoot {

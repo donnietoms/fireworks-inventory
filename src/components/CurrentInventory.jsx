@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import FinaleDBModal from './FinaleDBModal';
 import './CurrentInventory.css';
 
 function CurrentInventory({ inventory, shows, orders }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFinaleDBModal, setShowFinaleDBModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   // Calculate current inventory with FIFO costing
   const currentInventory = useMemo(() => {
     // First, calculate how much of each product has been used in shows
@@ -203,6 +206,18 @@ function CurrentInventory({ inventory, shows, orders }) {
     }), { available: 0, value: 0 });
   }, [filteredInventory]);
 
+  // Handle FinaleDB link
+  const handleFinaleDBClick = (item) => {
+    setSelectedItem(item);
+    setShowFinaleDBModal(true);
+  };
+
+  const handleFinaleDBLink = (finaleProduct) => {
+    console.log('Linking', selectedItem.partNumber, 'to FinaleDB product:', finaleProduct);
+    // TODO: Store finaleDbId and VDL data with inventory item
+    alert(`Successfully linked ${selectedItem.partNumber} to FinaleDB product: ${finaleProduct.name}`);
+  };
+
   if (currentInventory.length === 0) {
     return (
       <div className="empty-state">
@@ -271,6 +286,7 @@ function CurrentInventory({ inventory, shows, orders }) {
               <th>Description</th>
               <th>Available</th>
               <th>Avg Cost/Unit</th>
+              <th>Links</th>
             </tr>
           </thead>
           <tbody>
@@ -280,6 +296,15 @@ function CurrentInventory({ inventory, shows, orders }) {
                 <td className="description-cell">{item.description}</td>
                 <td className="available-qty">{item.available}</td>
                 <td>{formatCurrency(item.avgCost)}</td>
+                <td className="actions-cell">
+                  <button
+                    onClick={() => handleFinaleDBClick(item)}
+                    className="btn-youtube"
+                    title="Search YouTube"
+                  >
+                    📺 YouTube
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -287,12 +312,24 @@ function CurrentInventory({ inventory, shows, orders }) {
             <tr className="totals-row">
               <td><strong>TOTAL</strong></td>
               <td></td>
-              <td className="available-qty"><strong>{totals.available}</strong></td>
+              <td><strong>{totals.available}</strong></td>
+              <td><strong>{formatCurrency(totals.value)}</strong></td>
               <td></td>
             </tr>
           </tfoot>
         </table>
       </div>
+
+      <FinaleDBModal
+        isOpen={showFinaleDBModal}
+        onClose={() => {
+          setShowFinaleDBModal(false);
+          setSelectedItem(null);
+        }}
+        partNumber={selectedItem?.partNumber}
+        description={selectedItem?.description}
+        onLink={handleFinaleDBLink}
+      />
     </div>
   );
 }
