@@ -20,16 +20,13 @@ function HomePage() {
     },
     {
       name: 'Professional',
-      price: 35,
+      price: 15,
       features: [
-        'Up to 10,000 inventory items',
-        'Up to 5 team members',
+        'Up to 1,500 inventory items',
+        'Single user (no sharing)',
         'Everything in Starter, plus:',
         'YouTube video integration',
-        'Finale 3D exports',
-        'Multi-vendor support',
-        'Cloud backup & sync',
-        'Priority email support'
+        'Finale 3D exports'
       ],
       cta: 'Start Free Trial',
       popular: true
