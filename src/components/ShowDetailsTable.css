@@ -3,7 +3,11 @@
 }
 
 .show-details-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .btn-back {
@@ -14,11 +18,14 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  margin-bottom: 16px;
 }
 
 .btn-back:hover {
   background-color: #5a6268;
+}
+
+.show-info {
+  flex: 1;
 }
 
 .show-info h2 {
@@ -36,6 +43,27 @@
 
 .show-metadata span {
   display: inline-block;
+}
+
+.show-details-header .export-buttons {
+  display: flex;
+  gap: 8px;
+  align-self: flex-start;
+}
+
+.show-details-header .btn-export {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.show-details-header .btn-export:hover {
+  background-color: #218838;
 }
 
 .show-items-table-container {

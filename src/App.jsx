@@ -384,6 +384,7 @@ function App() {
               !selectedOrderNumber || item.orderNumber === selectedOrderNumber
             )}
             orderNumber={selectedOrderNumber}
+            order={selectedOrderNumber ? orders.find(o => o.orderNumber === selectedOrderNumber) : null}
             onViewDetails={handleViewInventoryDetails}
             onBack={selectedOrderNumber ? handleBackToOrders : null}
           />

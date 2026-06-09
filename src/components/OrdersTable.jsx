@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { API_BASE_URL } from '../config';
-import { exportOrderToCSV, exportOrderToExcel } from '../utils/fileParser';
 import './OrdersTable.css';
 
 const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) => {
@@ -162,20 +161,6 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
                         📄
                       </button>
                     )}
-                    <button 
-                      onClick={() => exportOrderToCSV(order)} 
-                      className="btn-export" 
-                      title="Export to CSV"
-                    >
-                      📥 CSV
-                    </button>
-                    <button 
-                      onClick={() => exportOrderToExcel(order)} 
-                      className="btn-export" 
-                      title="Export to Excel"
-                    >
-                      📥 XLS
-                    </button>
                     <button onClick={() => onEdit(order)} className="btn-edit">Edit</button>
                     <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
                   </td>

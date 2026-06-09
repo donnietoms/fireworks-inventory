@@ -1,4 +1,5 @@
 import React from 'react';
+import { exportShowToCSV, exportShowToExcel } from '../utils/fileParser';
 import './ShowDetailsTable.css';
 
 function ShowDetailsTable({ show, onBack }) {
@@ -31,6 +32,22 @@ function ShowDetailsTable({ show, onBack }) {
             <span><strong>Total Items:</strong> {show.totalItems}</span>
             <span><strong>Total Value:</strong> {formatCurrency(show.totalValue)}</span>
           </div>
+        </div>
+        <div className="export-buttons">
+          <button 
+            onClick={() => exportShowToCSV(show)} 
+            className="btn-export"
+            title="Export Show to CSV"
+          >
+            📥 CSV
+          </button>
+          <button 
+            onClick={() => exportShowToExcel(show)} 
+            className="btn-export"
+            title="Export Show to Excel"
+          >
+            📥 XLS
+          </button>
         </div>
       </div>
 

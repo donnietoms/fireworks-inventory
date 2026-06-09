@@ -1,7 +1,8 @@
 import React from 'react';
+import { exportOrderToCSV, exportOrderToExcel } from '../utils/fileParser';
 import './InventoryList.css';
 
-function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
+function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack }) {
   if (inventory.length === 0) {
     return (
       <div className="empty-state">
@@ -64,6 +65,24 @@ function InventoryList({ inventory, orderNumber, onViewDetails, onBack }) {
         <div className="inventory-header">
           <button onClick={onBack} className="btn-back">← Back to Orders</button>
           <h2>Inventory for Order #{orderNumber}</h2>
+          {order && (
+            <div className="export-buttons">
+              <button 
+                onClick={() => exportOrderToCSV(order)} 
+                className="btn-export"
+                title="Export Order to CSV"
+              >
+                📥 CSV
+              </button>
+              <button 
+                onClick={() => exportOrderToExcel(order)} 
+                className="btn-export"
+                title="Export Order to Excel"
+              >
+                📥 XLS
+              </button>
+            </div>
+          )}
         </div>
       )}
       

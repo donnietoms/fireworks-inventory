@@ -3,7 +3,11 @@
 }
 
 .inventory-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .inventory-header .btn-back {
@@ -14,7 +18,6 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  margin-bottom: 12px;
 }
 
 .inventory-header .btn-back:hover {
@@ -25,6 +28,27 @@
   margin: 0;
   color: #333;
   font-size: 24px;
+  flex: 1;
+}
+
+.inventory-header .export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.inventory-header .btn-export {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.inventory-header .btn-export:hover {
+  background-color: #218838;
 }
 
 .inventory-summary {
