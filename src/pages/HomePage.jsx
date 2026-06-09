@@ -6,10 +6,10 @@ function HomePage() {
   const pricingPlans = [
     {
       name: 'Starter',
-      price: 15,
+      price: 7,
       features: [
-        'Up to 1,000 inventory items',
-        'Single user account',
+        'Up to 500 inventory items',
+        'Single user (no sharing)',
         'PDF invoice parsing',
         'Shoot list tracking',
         'CSV/Excel import & export',
