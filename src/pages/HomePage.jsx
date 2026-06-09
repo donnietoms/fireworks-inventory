@@ -33,16 +33,15 @@ function HomePage() {
     },
     {
       name: 'Pro',
-      price: 75,
+      price: 25,
       features: [
         'Unlimited inventory items',
         'Unlimited team members',
         'Everything in Professional, plus:',
-        'Custom vendor integrations',
-        'API access',
-        'Advanced reporting',
-        'Phone & chat support',
-        'Dedicated account manager'
+        'Team collaboration & sharing',
+        'Cloud backup & sync',
+        'Priority email support',
+        'Multi-vendor support'
       ],
       cta: 'Start Free Trial',
       popular: false
