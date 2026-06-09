@@ -11,6 +11,21 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
     );
   }
 
+  // Build complete order object with items from inventory for export
+  const completeOrder = order ? {
+    ...order,
+    items: inventory.map(item => ({
+      partNumber: item.partNumber,
+      description: item.description,
+      packagesPerCase: item.packagesPerCase,
+      itemsPerPackage: item.itemsPerPackage,
+      cases: item.cases,
+      quantity: item.quantity,
+      cost: item.cost,
+      lineTotal: item.lineTotal || (item.quantity * item.cost)
+    }))
+  } : null;
+
   // Group inventory by part number
   const groupedInventory = inventory.reduce((acc, item) => {
     const key = item.partNumber;
@@ -65,17 +80,17 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
         <div className="inventory-header">
           <button onClick={onBack} className="btn-back">← Back to Orders</button>
           <h2>Inventory for Order #{orderNumber}</h2>
-          {order && (
+          {completeOrder && (
             <div className="export-buttons">
               <button 
-                onClick={() => exportOrderToCSV(order)} 
+                onClick={() => exportOrderToCSV(completeOrder)} 
                 className="btn-export"
                 title="Export Order to CSV"
               >
                 📥 CSV
               </button>
               <button 
-                onClick={() => exportOrderToExcel(order)} 
+                onClick={() => exportOrderToExcel(completeOrder)} 
                 className="btn-export"
                 title="Export Order to Excel"
               >
