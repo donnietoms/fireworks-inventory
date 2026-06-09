@@ -6,13 +6,13 @@ function HomePage() {
   const pricingPlans = [
     {
       name: 'Starter',
-      price: 10,
+      price: 15,
       features: [
-        '5,000 inventory items',
-        '3 team members',
-        'Cloud sync & backup',
+        'Up to 1,000 inventory items',
+        'Single user account',
         'PDF invoice parsing',
         'Shoot list tracking',
+        'CSV/Excel import & export',
         'Email support'
       ],
       cta: 'Start Free Trial',
@@ -20,36 +20,34 @@ function HomePage() {
     },
     {
       name: 'Professional',
-      price: 29,
+      price: 35,
       features: [
-        'Unlimited inventory items',
-        '10 team members',
-        'Cloud sync & backup',
-        'PDF invoice parsing',
-        'Shoot list tracking',
-        'YouTube integration',
+        'Up to 10,000 inventory items',
+        'Up to 5 team members',
+        'Everything in Starter, plus:',
+        'YouTube video integration',
         'Finale 3D exports',
-        'Priority support'
+        'Multi-vendor support',
+        'Cloud backup & sync',
+        'Priority email support'
       ],
       cta: 'Start Free Trial',
       popular: true
     },
     {
-      name: 'Enterprise',
-      price: 99,
+      name: 'Pro',
+      price: 75,
       features: [
-        'Unlimited everything',
+        'Unlimited inventory items',
         'Unlimited team members',
-        'Cloud sync & backup',
-        'PDF invoice parsing',
-        'Shoot list tracking',
-        'YouTube integration',
-        'Finale 3D exports',
-        'Custom integrations',
-        'Dedicated support',
-        'On-premise option'
+        'Everything in Professional, plus:',
+        'Custom vendor integrations',
+        'API access',
+        'Advanced reporting',
+        'Phone & chat support',
+        'Dedicated account manager'
       ],
-      cta: 'Contact Sales',
+      cta: 'Start Free Trial',
       popular: false
     }
   ];
@@ -168,7 +166,7 @@ function HomePage() {
                   ))}
                 </ul>
                 <Link 
-                  to={plan.name === 'Enterprise' ? '/contact' : '/signup'} 
+                  to="/signup" 
                   className={`btn-plan ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
                 >
                   {plan.cta}
