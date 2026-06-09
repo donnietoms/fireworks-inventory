@@ -26,6 +26,13 @@ export async function detectVendor(pdfPath) {
       return 'spiritof76';
     }
     
+    // Check for American Wholesale Fireworks
+    if (text.includes('american wholesale fireworks') ||
+        text.includes('7041 darrow road') ||
+        text.includes('hudson oh 44236')) {
+      return 'americanwholesale';
+    }
+    
     // Add more vendors here
     // if (text.includes('other vendor name')) {
     //   return 'other-vendor';
@@ -50,6 +57,11 @@ export function getSupportedVendors() {
     {
       id: 'spiritof76',
       name: 'Spirit of 76',
+      formats: ['pdf']
+    },
+    {
+      id: 'americanwholesale',
+      name: 'American Wholesale Fireworks',
       formats: ['pdf']
     }
     // Add more vendors as they're implemented
