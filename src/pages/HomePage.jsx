@@ -9,7 +9,7 @@ function HomePage() {
       price: 7,
       features: [
         'Up to 500 inventory items',
-        'Single user (no sharing)',
+        'Single user access',
         'CSV/Excel import & export',
         'Shoot list tracking',
         'Manual entry forms',
@@ -23,7 +23,7 @@ function HomePage() {
       price: 15,
       features: [
         'Up to 1,500 inventory items',
-        'Single user (no sharing)',
+        'Single user access',
         'Everything in Starter, plus:',
         'PDF invoice parsing (all vendors)',
         'YouTube video integration',
@@ -37,12 +37,11 @@ function HomePage() {
       price: 25,
       features: [
         'Unlimited inventory items',
-        'Unlimited team members',
+        'Single user access',
         'Everything in Professional, plus:',
-        'Team collaboration & sharing',
+        'Team collaboration & inventory sharing',
         'Cloud backup & sync',
-        'Priority email support',
-        'Multi-vendor support'
+        'Priority email support'
       ],
       cta: 'Start Free Trial',
       popular: false
