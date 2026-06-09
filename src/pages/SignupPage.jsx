@@ -27,8 +27,8 @@ function SignupPage() {
     setTimeout(() => {
       // Mock successful signup
       localStorage.setItem('user', JSON.stringify({ email, name }));
-      navigate('/app');
-      setLoading(false);
+      // Force page reload to update user state in App.jsx
+      window.location.href = '/app';
     }, 500);
   };
 

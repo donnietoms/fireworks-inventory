@@ -25,7 +25,8 @@ function LoginPage() {
           name: 'Admin User',
           role: 'admin'
         }));
-        navigate('/app');
+        // Force page reload to update user state in App.jsx
+        window.location.href = '/app';
       } else if (email && password) {
         // Any other email/password combination works for demo
         localStorage.setItem('user', JSON.stringify({ 
@@ -33,11 +34,12 @@ function LoginPage() {
           name: email.split('@')[0],
           role: 'user'
         }));
-        navigate('/app');
+        // Force page reload to update user state in App.jsx
+        window.location.href = '/app';
       } else {
         setError('Please enter email and password');
+        setLoading(false);
       }
-      setLoading(false);
     }, 500);
   };
 
