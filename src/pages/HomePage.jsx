@@ -10,9 +10,9 @@ function HomePage() {
       features: [
         'Up to 500 inventory items',
         'Single user (no sharing)',
-        'PDF invoice parsing',
-        'Shoot list tracking',
         'CSV/Excel import & export',
+        'Shoot list tracking',
+        'Manual entry forms',
         'Email support'
       ],
       cta: 'Start Free Trial',
@@ -25,6 +25,7 @@ function HomePage() {
         'Up to 1,500 inventory items',
         'Single user (no sharing)',
         'Everything in Starter, plus:',
+        'PDF invoice parsing (all vendors)',
         'YouTube video integration',
         'Finale 3D exports'
       ],
