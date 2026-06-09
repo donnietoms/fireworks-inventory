@@ -368,32 +368,53 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       )}
       
       {!preview ? (
-        <div
-          className={`drop-zone ${dragActive ? 'active' : ''} ${uploading ? 'uploading' : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => !disabled && fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls,.json,.pdf"
-            onChange={handleFileSelect}
-            disabled={disabled || uploading}
-            style={{ display: 'none' }}
-          />
-          {uploading ? (
-            <span>Processing...</span>
-          ) : (
-            <>
-              <span className="drop-icon">{isInvoice ? '+' : '-'}</span>
-              <span>Drop file here or click to browse</span>
-              <span className="file-types">PDF, Excel, CSV, JSON</span>
-            </>
+        <>
+          <div
+            className={`drop-zone ${dragActive ? 'active' : ''} ${uploading ? 'uploading' : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => !disabled && fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls,.json,.pdf"
+              onChange={handleFileSelect}
+              disabled={disabled || uploading}
+              style={{ display: 'none' }}
+            />
+            {uploading ? (
+              <span>Processing...</span>
+            ) : (
+              <>
+                <span className="drop-icon">{isInvoice ? '+' : '-'}</span>
+                <span>Drop file here or click to browse</span>
+                <span className="file-types">PDF, Excel, CSV, JSON</span>
+              </>
+            )}
+          </div>
+          
+          {/* CSV Import Format Note - only show for invoices */}
+          {isInvoice && (
+            <div className="csv-import-note" style={{
+              background: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              padding: '12px 16px',
+              marginTop: '12px',
+              borderRadius: '4px',
+              fontSize: '13px',
+              color: '#495057'
+            }}>
+              <strong>📋 CSV Import Format:</strong>
+              <p style={{ margin: '8px 0 0 0' }}>
+                For generic CSV/Excel files, include these columns: <strong>Part Number</strong> (or Product ID), <strong>Description</strong>, <strong>Quantity</strong>, and <strong>Cost</strong>. 
+                You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
+              </p>
+            </div>
           )}
-        </div>
+        </>
       ) : (
         <div className="preview-panel">
           {/* Vendor Confirmation for Invoices */}
