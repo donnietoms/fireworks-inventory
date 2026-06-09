@@ -19,7 +19,7 @@ function HomePage() {
       popular: false
     },
     {
-      name: 'Professional',
+      name: 'Advanced',
       price: 15,
       features: [
         'Up to 1,500 inventory items',
@@ -33,12 +33,12 @@ function HomePage() {
       popular: true
     },
     {
-      name: 'Pro',
+      name: 'Professional',
       price: 25,
       features: [
         'Unlimited inventory items',
         'Single user access',
-        'Everything in Professional, plus:',
+        'Everything in Advanced, plus:',
         'Team collaboration & inventory sharing',
         'Cloud backup & sync',
         'Priority email support'
