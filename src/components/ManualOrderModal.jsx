@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './ManualOrderModal.css';
 
-const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], inventory = [] }) => {
+const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editingOrder = null, inventory = [] }) => {
   const [orderData, setOrderData] = useState({
     vendor: 'Wisley',
     orderNumber: '',
@@ -15,15 +15,41 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
-    packing: '',
-    cases: '',
-    casePrice: '',
     quantity: '',
-    cost: '',
-    lineTotal: ''
+    packagesPerCase: '',
+    itemsPerPackage: '',
+    lineTotal: '',
+    totalItems: null,
+    costPerItem: null
   });
   
   const [error, setError] = useState('');
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingOrder) {
+      setOrderData({
+        vendor: editingOrder.vendor,
+        orderNumber: editingOrder.orderNumber,
+        orderDate: editingOrder.createdAt ? new Date(editingOrder.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        subtotal: editingOrder.subtotal,
+        discount: editingOrder.discount,
+        total: editingOrder.total
+      });
+      setItems(editingOrder.items || []);
+    } else {
+      // Reset form when not editing
+      setOrderData({
+        vendor: 'Wisley',
+        orderNumber: '',
+        orderDate: new Date().toISOString().split('T')[0],
+        subtotal: 0,
+        discount: 0,
+        total: 0
+      });
+      setItems([]);
+    }
+  }, [editingOrder]);
 
   const handleOrderChange = (field, value) => {
     setOrderData(prev => ({ ...prev, [field]: value }));
@@ -152,9 +178,10 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
       return;
     }
     
-    // Check for duplicate order number
+    // Check for duplicate order number (skip if editing the same order)
     const isDuplicate = existingOrders.some(
-      order => order.orderNumber === orderData.orderNumber
+      order => order.orderNumber === orderData.orderNumber && 
+      (!editingOrder || order.id !== editingOrder.id)
     );
     
     if (isDuplicate) {
@@ -205,7 +232,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Manual Order Entry</h2>
+        <h2>{editingOrder ? 'Edit Order' : 'Manual Order Entry'}</h2>
         {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
@@ -433,7 +460,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], invento
               Cancel
             </button>
             <button type="submit" className="btn-submit">
-              Create Order
+              {editingOrder ? 'Update Order' : 'Create Order'}
             </button>
           </div>
         </form>
