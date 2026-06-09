@@ -12,6 +12,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
   });
   
   const [items, setItems] = useState([]);
+  const [editingItemIndex, setEditingItemIndex] = useState(null); // Track which item is being edited
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
@@ -123,7 +124,32 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
       lineTotal: lineTotal
     };
 
-    setItems(prev => [...prev, newItem]);
+    if (editingItemIndex !== null) {
+      // Update existing item
+      const updatedItems = [...items];
+      updatedItems[editingItemIndex] = newItem;
+      setItems(updatedItems);
+      setEditingItemIndex(null);
+      
+      // Recalculate order totals
+      const newSubtotal = updatedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      setOrderData(prev => ({
+        ...prev,
+        subtotal: newSubtotal,
+        total: newSubtotal - prev.discount
+      }));
+    } else {
+      // Add new item
+      setItems(prev => [...prev, newItem]);
+      
+      // Recalculate order totals
+      const newSubtotal = [...items, newItem].reduce((sum, item) => sum + item.lineTotal, 0);
+      setOrderData(prev => ({
+        ...prev,
+        subtotal: newSubtotal,
+        total: newSubtotal - prev.discount
+      }));
+    }
     
     // Reset current item
     setCurrentItem({
@@ -137,15 +163,36 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
       costPerItem: null
     });
     
-    // Recalculate order totals
-    const newSubtotal = [...items, newItem].reduce((sum, item) => sum + item.lineTotal, 0);
-    setOrderData(prev => ({
-      ...prev,
-      subtotal: newSubtotal,
-      total: newSubtotal - prev.discount
-    }));
-    
     setError('');
+  };
+
+  const editItem = (index) => {
+    const item = items[index];
+    setCurrentItem({
+      partNumber: item.partNumber,
+      description: item.description,
+      quantity: item.cases?.toString() || '',
+      packagesPerCase: item.packagesPerCase?.toString() || '',
+      itemsPerPackage: item.itemsPerPackage?.toString() || '',
+      lineTotal: item.lineTotal?.toString() || '',
+      totalItems: item.quantity,
+      costPerItem: item.cost
+    });
+    setEditingItemIndex(index);
+  };
+
+  const cancelEdit = () => {
+    setCurrentItem({
+      partNumber: '',
+      description: '',
+      quantity: '',
+      packagesPerCase: '',
+      itemsPerPackage: '',
+      lineTotal: '',
+      totalItems: null,
+      costPerItem: null
+    });
+    setEditingItemIndex(null);
   };
 
   const removeItem = (index) => {
@@ -363,10 +410,15 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
             </div>
 
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
                 <button type="button" onClick={addItem} className="btn-add-item">
-                  + Add Item
+                  {editingItemIndex !== null ? '✓ Update Item' : '+ Add Item'}
                 </button>
+                {editingItemIndex !== null && (
+                  <button type="button" onClick={cancelEdit} className="btn-cancel">
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -390,7 +442,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                 </thead>
                 <tbody>
                   {items.map((item, index) => (
-                    <tr key={index}>
+                    <tr key={index} style={editingItemIndex === index ? { backgroundColor: '#fff3cd' } : {}}>
                       <td>{item.partNumber}</td>
                       <td>{item.description}</td>
                       <td>
@@ -403,6 +455,14 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                       <td>${item.cost.toFixed(4)}</td>
                       <td>${item.lineTotal.toFixed(2)}</td>
                       <td>
+                        <button 
+                          type="button" 
+                          onClick={() => editItem(index)}
+                          className="btn-edit"
+                          style={{ marginRight: '5px' }}
+                        >
+                          ✏️
+                        </button>
                         <button 
                           type="button" 
                           onClick={() => removeItem(index)}
