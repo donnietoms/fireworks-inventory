@@ -19,7 +19,10 @@ export async function detectVendor(pdfPath) {
     }
     
     // Check for Spirit of 76
-    if (text.includes('6401 w. highway 40') ||
+    if (text.includes("spirit of '76") ||
+        text.includes('6401 w. highway 40') ||
+        text.includes('6401 us-40') ||
+        text.includes('columbia mo 65202') ||
         text.includes('columbia, mo, 65202') ||
         text.includes('(573) 447-1776') ||
         text.includes('boonville, mo, 65233')) {
