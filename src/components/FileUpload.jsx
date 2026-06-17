@@ -20,6 +20,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [genericVendor, setGenericVendor] = useState('');
   const [genericOrderDate, setGenericOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [partNumberEdits, setPartNumberEdits] = useState({}); // Store part number edits for show list items: { originalPartNumber: newPartNumber }
+  const [showName, setShowName] = useState(''); // For shoot list uploads
+  const [showDate, setShowDate] = useState(new Date().toISOString().split('T')[0]); // For shoot list uploads
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
@@ -166,6 +168,12 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         }
       }
       
+      // For shoot lists, validate show date
+      if (!isInvoice && !showDate.trim()) {
+        alert('Please enter a show date');
+        return;
+      }
+      
       // Apply packing edits to items before uploading (invoices only)
       const updatedItems = isInvoice ? preview.items.map(item => {
         if (packingEdits[item.partNumber]) {
@@ -230,9 +238,18 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       }
       
       // Pass show info if it's a shoot list upload
-      const showInfo = !isInvoice && preview.showInfo ? preview.showInfo : null;
+      let finalShowInfo = null;
+      if (!isInvoice) {
+        // Create or update show info with user-provided date and optional name
+        finalShowInfo = {
+          ...(preview.showInfo || {}),
+          date: showDate,
+          name: showName || preview.showInfo?.name || null,
+          location: preview.showInfo?.location || null
+        };
+      }
       
-      const warnings = onUpload(updatedItems, preview.fileName, isInvoice ? orderInfo : showInfo);
+      const warnings = onUpload(updatedItems, preview.fileName, isInvoice ? orderInfo : finalShowInfo);
       
       if (warnings && warnings.length > 0) {
         const warningMessages = warnings.map(w => 
@@ -259,6 +276,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     setGenericOrderNumber('');
     setGenericVendor('');
     setGenericOrderDate(new Date().toISOString().split('T')[0]);
+    setShowName('');
+    setShowDate(new Date().toISOString().split('T')[0]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -276,6 +295,8 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       setPreviewVendor(null);
       setPackingEdits({});
       setPartNumberEdits({});
+      setShowName('');
+      setShowDate(new Date().toISOString().split('T')[0]);
       await processFile(preview.originalFile, newVendor);
     }
   };
@@ -501,6 +522,35 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                     type="date"
                     value={genericOrderDate}
                     onChange={(e) => setGenericOrderDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Show information for shoot lists */}
+          {!isInvoice && (
+            <div className="generic-order-info">
+              <h4>Show Information (Required)</h4>
+              <div className="order-info-grid">
+                <div className="form-group">
+                  <label htmlFor="show-name">Show Name (Optional)</label>
+                  <input
+                    id="show-name"
+                    type="text"
+                    value={showName}
+                    onChange={(e) => setShowName(e.target.value)}
+                    placeholder="e.g., July 4th Celebration"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="show-date">Show Date *</label>
+                  <input
+                    id="show-date"
+                    type="date"
+                    value={showDate}
+                    onChange={(e) => setShowDate(e.target.value)}
                     required
                   />
                 </div>
