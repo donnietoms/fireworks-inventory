@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { exportOrderToCSV, exportOrderToExcel } from '../utils/fileParser';
 import './InventoryList.css';
 
 function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack }) {
+  const [searchTerm, setSearchTerm] = useState('');
   if (inventory.length === 0) {
     return (
       <div className="empty-state">
@@ -26,46 +27,59 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
     }))
   } : null;
 
-  // Group inventory by part number
-  const groupedInventory = inventory.reduce((acc, item) => {
-    const key = item.partNumber;
-    if (!acc[key]) {
-      acc[key] = {
-        partNumber: item.partNumber,
-        description: item.description,
-        items: [],
-        totalCases: 0,
-        totalQuantity: 0,
-        totalValue: 0
+  // Group inventory by part number and filter by search
+  const summaryData = useMemo(() => {
+    const groupedInventory = inventory.reduce((acc, item) => {
+      const key = item.partNumber;
+      if (!acc[key]) {
+        acc[key] = {
+          partNumber: item.partNumber,
+          description: item.description,
+          items: [],
+          totalCases: 0,
+          totalQuantity: 0,
+          totalValue: 0
+        };
+      }
+      acc[key].items.push(item);
+      acc[key].totalCases += item.cases || 0;
+      acc[key].totalQuantity += item.quantity;
+      // Use lineTotal if available, otherwise calculate from quantity * cost
+      acc[key].totalValue += item.lineTotal || (item.quantity * item.cost);
+      return acc;
+    }, {});
+
+    // Convert to array and calculate weighted average cost
+    let data = Object.values(groupedInventory).map(group => {
+      const avgCost = group.totalQuantity > 0 ? group.totalValue / group.totalQuantity : 0;
+      // Get packing from first item (all items in same order should have same packing)
+      const firstItem = group.items[0];
+      const packing = firstItem.packagesPerCase && firstItem.itemsPerPackage 
+        ? `${firstItem.packagesPerCase}/${firstItem.itemsPerPackage}` 
+        : '-';
+      
+      return {
+        ...group,
+        avgCost,
+        packing,
+        orderCount: group.items.length
       };
+    });
+
+    // Sort by part number
+    data.sort((a, b) => a.partNumber.localeCompare(b.partNumber));
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      data = data.filter(item =>
+        item.partNumber.toLowerCase().includes(search) ||
+        item.description.toLowerCase().includes(search)
+      );
     }
-    acc[key].items.push(item);
-    acc[key].totalCases += item.cases || 0;
-    acc[key].totalQuantity += item.quantity;
-    // Use lineTotal if available, otherwise calculate from quantity * cost
-    acc[key].totalValue += item.lineTotal || (item.quantity * item.cost);
-    return acc;
-  }, {});
 
-  // Convert to array and calculate weighted average cost
-  const summaryData = Object.values(groupedInventory).map(group => {
-    const avgCost = group.totalQuantity > 0 ? group.totalValue / group.totalQuantity : 0;
-    // Get packing from first item (all items in same order should have same packing)
-    const firstItem = group.items[0];
-    const packing = firstItem.packagesPerCase && firstItem.itemsPerPackage 
-      ? `${firstItem.packagesPerCase}/${firstItem.itemsPerPackage}` 
-      : '-';
-    
-    return {
-      ...group,
-      avgCost,
-      packing,
-      orderCount: group.items.length
-    };
-  });
-
-  // Sort by part number
-  summaryData.sort((a, b) => a.partNumber.localeCompare(b.partNumber));
+    return data;
+  }, [inventory, searchTerm]);
 
   const formatCurrency = (value) => {
     return `$${value.toFixed(2)}`;
@@ -114,6 +128,30 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
           <span className="stat-label">Total Value:</span>
           <span className="stat-value">{formatCurrency(totalValue)}</span>
         </div>
+      </div>
+
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search by part number or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')} 
+            className="clear-search"
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
+        {searchTerm && (
+          <span className="search-results">
+            Showing {summaryData.length} of {inventory.filter((item, idx, self) => self.findIndex(i => i.partNumber === item.partNumber) === idx).length} products
+          </span>
+        )}
       </div>
 
       <div className="inventory-table-container">
