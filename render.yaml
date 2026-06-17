@@ -7,3 +7,5 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: VITE_YOUTUBE_API_KEY
+        value: AIzaSyD457DJOvlY9-kfIMIGY-DsUSc-NTl62JA
