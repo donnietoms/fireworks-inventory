@@ -19,6 +19,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [genericOrderNumber, setGenericOrderNumber] = useState('');
   const [genericVendor, setGenericVendor] = useState('');
   const [genericOrderDate, setGenericOrderDate] = useState(new Date().toISOString().split('T')[0]);
+  const [partNumberEdits, setPartNumberEdits] = useState({}); // Store part number edits for show list items: { originalPartNumber: newPartNumber }
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
@@ -185,7 +186,16 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
           };
         }
         return item;
-      }) : preview.items;
+      }) : preview.items.map(item => {
+        // Apply part number edits for show list items
+        if (partNumberEdits[item.partNumber] && partNumberEdits[item.partNumber] !== item.partNumber) {
+          return {
+            ...item,
+            partNumber: partNumberEdits[item.partNumber]
+          };
+        }
+        return item;
+      });
       
       // Check if any items still need packing (invoices only, but not for generic imports)
       if (isInvoice && !isGenericImport) {
@@ -236,6 +246,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       setPreview(null);
       setPreviewVendor(null);
       setPackingEdits({});
+      setPartNumberEdits({});
     }
   };
 
@@ -243,6 +254,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     setPreview(null);
     setPreviewVendor(null);
     setPackingEdits({});
+    setPartNumberEdits({});
     setIsGenericImport(false);
     setGenericOrderNumber('');
     setGenericVendor('');
@@ -263,6 +275,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       setPreview(null);
       setPreviewVendor(null);
       setPackingEdits({});
+      setPartNumberEdits({});
       await processFile(preview.originalFile, newVendor);
     }
   };
@@ -654,22 +667,51 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                           </td>
                           <td>${cost !== null && !isNaN(cost) ? cost.toFixed(2) : '?'}</td>
                         </>
-                      ) : (
-                        <>
-                          <td>{item.size}</td>
-                          <td>{item.partNumber}</td>
-                          <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.description}
-                          </td>
-                          <td>{item.quantity || 0}</td>
-                          <td style={{ color: hasInventory ? 'green' : 'red' }}>
-                            {hasInventory ? `✓ ${inventoryQty}` : '✗ Not in inventory'}
-                          </td>
-                          <td>
-                            {hasInventory ? `$${inventoryCost.toFixed(2)}` : 'N/A'}
-                          </td>
-                        </>
-                      )}
+                       ) : (
+                         <>
+                           <td>{item.size}</td>
+                           <td>
+                             {hasInventory ? (
+                               item.partNumber
+                             ) : (
+                               <select 
+                                 value={partNumberEdits[item.partNumber] || item.partNumber}
+                                 onChange={(e) => setPartNumberEdits({
+                                   ...partNumberEdits,
+                                   [item.partNumber]: e.target.value
+                                 })}
+                                 style={{
+                                   padding: '4px 8px',
+                                   border: '1px solid #ff9800',
+                                   borderRadius: '4px',
+                                   backgroundColor: '#fff3cd',
+                                   fontSize: '14px',
+                                   cursor: 'pointer'
+                                 }}
+                               >
+                                 <option value={item.partNumber}>{item.partNumber} (not in inventory)</option>
+                                 <optgroup label="Available in Inventory">
+                                   {Array.from(new Set(inventory.map(inv => inv.partNumber))).sort().map(partNum => (
+                                     <option key={partNum} value={partNum}>
+                                       {partNum}
+                                     </option>
+                                   ))}
+                                 </optgroup>
+                               </select>
+                             )}
+                           </td>
+                           <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                             {item.description}
+                           </td>
+                           <td>{item.quantity || 0}</td>
+                           <td style={{ color: hasInventory ? 'green' : 'red' }}>
+                             {hasInventory ? `✓ ${inventoryQty}` : '✗ Not in inventory'}
+                           </td>
+                           <td>
+                             {hasInventory ? `$${inventoryCost.toFixed(2)}` : 'N/A'}
+                           </td>
+                         </>
+                       )}
                     </tr>
                   );
                 })}
