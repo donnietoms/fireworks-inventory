@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import FinaleDBModal from './FinaleDBModal';
+import ItemHistoryModal from './ItemHistoryModal';
 import './CurrentInventory.css';
 
 function CurrentInventory({ inventory, shows, orders }) {
@@ -8,6 +9,8 @@ function CurrentInventory({ inventory, shows, orders }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [sortColumn, setSortColumn] = useState('partNumber'); // Default sort by part number
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPartNumber, setHistoryPartNumber] = useState(null);
   
   // Handle column header click for sorting
   const handleSort = (column) => {
@@ -273,6 +276,11 @@ function CurrentInventory({ inventory, shows, orders }) {
     alert(`Successfully linked ${selectedItem.partNumber} to FinaleDB product: ${finaleProduct.name}`);
   };
 
+  const handleItemHistoryClick = (partNumber) => {
+    setHistoryPartNumber(partNumber);
+    setShowHistoryModal(true);
+  };
+
   if (currentInventory.length === 0) {
     return (
       <div className="empty-state">
@@ -352,25 +360,25 @@ function CurrentInventory({ inventory, shows, orders }) {
               <th>Links</th>
             </tr>
           </thead>
-          <tbody>
-            {sortedInventory.map((item, index) => (
-              <tr key={index}>
-                <td>{item.partNumber}</td>
-                <td className="description-cell">{item.description}</td>
-                <td className="available-qty">{item.available}</td>
-                <td>{formatCurrency(item.avgCost)}</td>
-                <td className="actions-cell">
-                  <button
-                    onClick={() => handleFinaleDBClick(item)}
-                    className="btn-youtube"
-                    title="Search YouTube"
-                  >
-                    📺 YouTube
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+           <tbody>
+             {sortedInventory.map((item, index) => (
+               <tr key={index} className="clickable-row" onClick={() => handleItemHistoryClick(item.partNumber)} style={{ cursor: 'pointer' }}>
+                 <td>{item.partNumber}</td>
+                 <td className="description-cell">{item.description}</td>
+                 <td className="available-qty">{item.available}</td>
+                 <td>{formatCurrency(item.avgCost)}</td>
+                 <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                   <button
+                     onClick={() => handleFinaleDBClick(item)}
+                     className="btn-youtube"
+                     title="Search YouTube"
+                   >
+                     📺 YouTube
+                   </button>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
           <tfoot>
             <tr className="totals-row">
               <td><strong>TOTAL</strong></td>
@@ -392,6 +400,18 @@ function CurrentInventory({ inventory, shows, orders }) {
         partNumber={selectedItem?.partNumber}
         description={selectedItem?.description}
         onLink={handleFinaleDBLink}
+      />
+
+      <ItemHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => {
+          setShowHistoryModal(false);
+          setHistoryPartNumber(null);
+        }}
+        partNumber={historyPartNumber}
+        inventory={inventory}
+        shows={shows}
+        orders={orders}
       />
     </div>
   );
