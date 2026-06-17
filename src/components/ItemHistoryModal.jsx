@@ -19,7 +19,7 @@ const ItemHistoryModal = ({ isOpen, onClose, partNumber, inventory, shows, order
         ...show,
         itemsUsed: show.items.filter(item => item.partNumber === partNumber)
       }))
-      .sort((a, b) => new Date(a.showDate || b.showDate) - new Date(b.showDate || a.showDate));
+      .sort((a, b) => new Date(a.date || b.date) - new Date(b.date || a.date));
     
     return showsWithItem;
   }, [partNumber, shows]);
@@ -128,11 +128,11 @@ const ItemHistoryModal = ({ isOpen, onClose, partNumber, inventory, shows, order
             ) : (
               <div className="shows-list">
                 {showsUsing.map((show, idx) => (
-                  <div key={idx} className="show-card">
-                    <div className="show-header">
-                      <strong>{show.showName || 'Unnamed Show'}</strong>
-                      <span className="show-date">{formatDate(show.showDate)}</span>
-                    </div>
+                   <div key={idx} className="show-card">
+                     <div className="show-header">
+                       <strong>{show.name || 'Unnamed Show'}</strong>
+                       <span className="show-date">{formatDate(show.date)}</span>
+                     </div>
                     <div className="show-details">
                       <div>Total Used: <strong>{show.itemsUsed.reduce((sum, i) => sum + (i.quantity || 0), 0)} items</strong></div>
                       {show.location && <div>Location: {show.location}</div>}
@@ -163,12 +163,12 @@ const ItemHistoryModal = ({ isOpen, onClose, partNumber, inventory, shows, order
                     </div>
                   ))}
                   {showsUsing.map((show, idx) => (
-                    <div key={`show-${idx}`} className="timeline-item show-item">
-                      <div className="timeline-marker">📤</div>
-                      <div className="timeline-content">
-                        <strong>Used in {show.showName || 'Show'}</strong>
-                        <div>{show.itemsUsed.reduce((sum, i) => sum + (i.quantity || 0), 0)} items</div>
-                        <div className="timeline-date">{formatDate(show.showDate)}</div>
+                     <div key={`show-${idx}`} className="timeline-item show-item">
+                       <div className="timeline-marker">📤</div>
+                       <div className="timeline-content">
+                         <strong>Used in {show.name || 'Show'}</strong>
+                         <div>{show.itemsUsed.reduce((sum, i) => sum + (i.quantity || 0), 0)} items</div>
+                         <div className="timeline-date">{formatDate(show.date)}</div>
                       </div>
                     </div>
                   ))}
