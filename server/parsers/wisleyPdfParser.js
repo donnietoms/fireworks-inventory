@@ -13,6 +13,7 @@ export async function parseWisleyPDF(pdfPath) {
     const items = [];
     let orderInfo = {
       orderNumber: null,
+      orderDate: null,
       subtotal: 0,
       total: 0,
       discount: 0
@@ -30,6 +31,22 @@ export async function parseWisleyPDF(pdfPath) {
       const orderMatch = line.match(/ORDER NUMBER:\s*(\S+)/i) || line.match(/SALE NUMBER:\s*(\S+)/i);
       if (orderMatch) {
         orderInfo.orderNumber = orderMatch[1];
+      }
+      
+      // Extract order date (match patterns like "06/14/23" or "6/14/2023" or "June 14, 2023")
+      if (!orderInfo.orderDate) {
+        // Try MM/DD/YY format
+        const dateMatch1 = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+        if (dateMatch1) {
+          let month = dateMatch1[1].padStart(2, '0');
+          let day = dateMatch1[2].padStart(2, '0');
+          let year = dateMatch1[3];
+          // Convert 2-digit year to 4-digit
+          if (year.length === 2) {
+            year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+          }
+          orderInfo.orderDate = `${year}-${month}-${day}`;
+        }
       }
       
       // Extract subtotal (anywhere in document)

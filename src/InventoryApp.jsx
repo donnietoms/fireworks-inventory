@@ -109,6 +109,18 @@ function InventoryApp({ user }) {
     // Get order number
     const orderNumber = orderInfo?.orderNumber || fileName;
     
+    // Get order date from parser, or ask user if not available
+    let orderDate = orderInfo?.orderDate;
+    if (!orderDate) {
+      const userDate = window.prompt('Order date not found in invoice. Please enter the order date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+      if (!userDate) {
+        return { warnings: [{ error: 'Upload cancelled - order date required' }] };
+      }
+      orderDate = userDate;
+    } else {
+      orderDate = new Date(orderDate).toISOString();
+    }
+    
     // Check if order already exists
     const existingOrder = orders.find(o => o.orderNumber === orderNumber);
     if (existingOrder) {
@@ -139,7 +151,6 @@ function InventoryApp({ user }) {
     }
     
     // Create order record if orderInfo provided
-    const orderDate = new Date().toISOString();
     if (orderInfo) {
       addOrder({
         vendor: orderInfo.vendor || 'Unknown',
