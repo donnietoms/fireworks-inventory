@@ -8,8 +8,19 @@ const ItemHistoryModal = ({ isOpen, onClose, partNumber, inventory, shows, order
   const itemOrders = useMemo(() => {
     return inventory
       .filter(item => item.partNumber === partNumber)
+      .map(item => {
+        // If vendor is missing from item, look it up from orders array
+        if (!item.vendor && item.orderNumber && orders) {
+          const order = orders.find(o => o.orderNumber === item.orderNumber);
+          return {
+            ...item,
+            vendor: order?.vendor || 'Unknown'
+          };
+        }
+        return item;
+      })
       .sort((a, b) => new Date(a.orderDate) - new Date(b.orderDate));
-  }, [partNumber, inventory]);
+  }, [partNumber, inventory, orders]);
 
   // Get all shows that used this part number
   const showsUsing = useMemo(() => {
