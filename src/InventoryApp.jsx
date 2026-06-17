@@ -153,8 +153,8 @@ function InventoryApp({ user }) {
       });
     }
     
-    // Add items to inventory with order number and date
-    const result = addFromInvoice(items, fileName, orderNumber, orderDate);
+    // Add items to inventory with order number, date, and vendor
+    const result = addFromInvoice(items, fileName, orderNumber, orderDate, orderInfo?.vendor || 'Unknown');
     
     return result;
   };
@@ -265,7 +265,7 @@ function InventoryApp({ user }) {
       deleteItemsByOrder(editingOrder.orderNumber);
       
       // Add new inventory items
-      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
+      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
       
       setEditingOrder(null);
     } else {
@@ -273,7 +273,7 @@ function InventoryApp({ user }) {
       addOrder(order);
       
       // Add all items to inventory
-      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate);
+      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
     }
   };
 
