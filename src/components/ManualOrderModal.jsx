@@ -13,6 +13,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
   
   const [items, setItems] = useState([]);
   const [editingItemIndex, setEditingItemIndex] = useState(null); // Track which item is being edited
+  const [editingItem, setEditingItem] = useState(null); // Store inline edited item data
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
@@ -178,7 +179,27 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
       totalItems: item.quantity,
       costPerItem: item.cost
     });
+    setEditingItem({ ...item }); // Also set for inline editing
     setEditingItemIndex(index);
+  };
+
+  const updateEditingItem = () => {
+    if (editingItemIndex !== null && editingItem) {
+      const updatedItems = [...items];
+      updatedItems[editingItemIndex] = editingItem;
+      setItems(updatedItems);
+      
+      // Recalculate totals
+      const newSubtotal = updatedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      setOrderData(prev => ({
+        ...prev,
+        subtotal: newSubtotal,
+        total: newSubtotal - prev.discount
+      }));
+      
+      setEditingItemIndex(null);
+      setEditingItem(null);
+    }
   };
 
   const cancelEdit = () => {
@@ -193,6 +214,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
       costPerItem: null
     });
     setEditingItemIndex(null);
+    setEditingItem(null);
   };
 
   const removeItem = (index) => {
@@ -443,33 +465,144 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                 <tbody>
                   {items.map((item, index) => (
                     <tr key={index} style={editingItemIndex === index ? { backgroundColor: '#fff3cd' } : {}}>
-                      <td>{item.partNumber}</td>
-                      <td>{item.description}</td>
                       <td>
-                        {item.packagesPerCase && item.itemsPerPackage 
-                          ? `${item.packagesPerCase}/${item.itemsPerPackage}` 
-                          : '-'}
+                        {editingItemIndex === index ? (
+                          <input
+                            type="text"
+                            value={editingItem.partNumber}
+                            onChange={(e) => setEditingItem({ ...editingItem, partNumber: e.target.value })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          item.partNumber
+                        )}
                       </td>
-                      <td>{item.cases}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.cost.toFixed(4)}</td>
-                      <td>${item.lineTotal.toFixed(2)}</td>
                       <td>
-                        <button 
-                          type="button" 
-                          onClick={() => editItem(index)}
-                          className="btn-edit"
-                          style={{ marginRight: '5px' }}
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => removeItem(index)}
-                          className="btn-remove"
-                        >
-                          ✕
-                        </button>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="text"
+                            value={editingItem.description}
+                            onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          item.description
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="text"
+                            value={editingItem.packagesPerCase && editingItem.itemsPerPackage 
+                              ? `${editingItem.packagesPerCase}/${editingItem.itemsPerPackage}` 
+                              : ''}
+                            onChange={(e) => {
+                              const [pkg, itemPkg] = e.target.value.split('/').map(n => parseInt(n) || 0);
+                              setEditingItem({ 
+                                ...editingItem, 
+                                packagesPerCase: pkg, 
+                                itemsPerPackage: itemPkg 
+                              });
+                            }}
+                            placeholder="X/Y"
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          item.packagesPerCase && item.itemsPerPackage 
+                            ? `${item.packagesPerCase}/${item.itemsPerPackage}` 
+                            : '-'
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="number"
+                            value={editingItem.cases}
+                            onChange={(e) => setEditingItem({ ...editingItem, cases: parseInt(e.target.value) || 0 })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          item.cases
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="number"
+                            value={editingItem.quantity}
+                            onChange={(e) => setEditingItem({ ...editingItem, quantity: parseInt(e.target.value) || 0 })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          item.quantity
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="number"
+                            step="0.0001"
+                            value={editingItem.cost}
+                            onChange={(e) => setEditingItem({ ...editingItem, cost: parseFloat(e.target.value) || 0 })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          `$${item.cost.toFixed(4)}`
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={editingItem.lineTotal}
+                            onChange={(e) => setEditingItem({ ...editingItem, lineTotal: parseFloat(e.target.value) || 0 })}
+                            style={{ width: '100%', padding: '4px' }}
+                          />
+                        ) : (
+                          `$${item.lineTotal.toFixed(2)}`
+                        )}
+                      </td>
+                      <td>
+                        {editingItemIndex === index ? (
+                          <>
+                            <button 
+                              type="button" 
+                              onClick={() => updateEditingItem()}
+                              className="btn-save"
+                              style={{ marginRight: '5px' }}
+                              title="Save changes"
+                            >
+                              ✓
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => setEditingItemIndex(null)}
+                              className="btn-cancel"
+                              title="Cancel editing"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button 
+                              type="button" 
+                              onClick={() => editItem(index)}
+                              className="btn-edit"
+                              style={{ marginRight: '5px' }}
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => removeItem(index)}
+                              className="btn-remove"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}
