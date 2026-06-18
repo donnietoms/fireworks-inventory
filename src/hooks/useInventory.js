@@ -48,27 +48,19 @@ export const useInventory = () => {
 
     try {
       // Prepare inventory items for insertion
-      const inventoryItems = items
-        .filter(newItem => newItem.quantity > 0) // Only insert items with quantity > 0
-        .map(newItem => ({
-          user_id: user.id,
-          order_id: newItem.orderId, // This should be set from the order creation
-          part_number: newItem.partNumber,
-          description: newItem.description,
-          quantity: newItem.quantity,
-          cost: newItem.cost,
-          line_total: newItem.lineTotal,
-          packing: newItem.packing || '1/1',
-          order_number: orderNumber,
-          order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-          vendor: vendor || 'Unknown'
-        }));
-
-      // If no valid items, return empty array
-      if (inventoryItems.length === 0) {
-        console.warn('No valid items to insert (all quantities were 0 or less)');
-        return [];
-      }
+      const inventoryItems = items.map(newItem => ({
+        user_id: user.id,
+        order_id: newItem.orderId, // This should be set from the order creation
+        part_number: newItem.partNumber,
+        description: newItem.description,
+        quantity: newItem.quantity,
+        cost: newItem.cost,
+        line_total: newItem.lineTotal,
+        packing: newItem.packing || '1/1',
+        order_number: orderNumber,
+        order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        vendor: vendor || 'Unknown'
+      }));
 
       const { data, error } = await supabase
         .from('inventory')
@@ -141,23 +133,13 @@ export const useInventory = () => {
           const newQuantity = item.quantity - subtractFromThis;
           remainingToSubtract -= subtractFromThis;
           
-          if (newQuantity === 0) {
-            // Delete the item
-            const { error } = await supabase
-              .from('inventory')
-              .delete()
-              .eq('id', item.id);
-            
-            if (error) throw error;
-          } else {
-            // Update the quantity
-            const { error } = await supabase
-              .from('inventory')
-              .update({ quantity: newQuantity })
-              .eq('id', item.id);
-            
-            if (error) throw error;
-          }
+          // Always update quantity, even if it becomes 0 or negative
+          const { error } = await supabase
+            .from('inventory')
+            .update({ quantity: newQuantity })
+            .eq('id', item.id);
+          
+          if (error) throw error;
         }
       }
       
@@ -175,11 +157,6 @@ export const useInventory = () => {
   const addItem = useCallback(async (item) => {
     if (!user) {
       throw new Error('User must be logged in to add items');
-    }
-
-    // Validate quantity
-    if (!item.quantity || item.quantity <= 0) {
-      throw new Error('Quantity must be greater than 0');
     }
 
     try {
@@ -328,24 +305,21 @@ export const useInventory = () => {
       // First, clear existing inventory
       await clearInventory();
 
-      // Then add new items (filter out items with quantity <= 0)
-      const newItems = items
-        .filter(item => item.quantity > 0) // Only items with valid quantity
-        .map(item => ({
-          user_id: user.id,
-          order_id: item.orderId, // Should be provided
-          part_number: item.partNumber || '',
-          description: item.description || '',
-          quantity: item.quantity,
-          cost: item.cost || 0,
-          line_total: item.quantity * (item.cost || 0),
-          packing: item.packing || '1/1',
-          order_number: item.orderNumber || 'Import',
-          order_date: new Date().toISOString().split('T')[0],
-          vendor: item.vendor || 'Import'
-        }));
+      // Then add new items
+      const newItems = items.map(item => ({
+        user_id: user.id,
+        order_id: item.orderId, // Should be provided
+        part_number: item.partNumber || '',
+        description: item.description || '',
+        quantity: item.quantity || 0,
+        cost: item.cost || 0,
+        line_total: (item.quantity || 0) * (item.cost || 0),
+        packing: item.packing || '1/1',
+        order_number: item.orderNumber || 'Import',
+        order_date: new Date().toISOString().split('T')[0],
+        vendor: item.vendor || 'Import'
+      }));
 
-      // If no valid items, just return empty array
       if (newItems.length === 0) {
         setInventory([]);
         return [];
