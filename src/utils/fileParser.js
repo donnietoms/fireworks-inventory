@@ -611,86 +611,63 @@ export const exportShowToExcel = (show) => {
   XLSX.writeFile(workbook, `show_${show.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
 
-// Parse shoot list from CSV/Excel format
+// Parse shoot list from CSV format (comma-separated, first row is header)
 export const parseShootListCSV = async (file) => {
   try {
     const text = await file.text();
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
     
-    const items = [];
-    let inProductTotals = false;
-    let headerFound = false;
-    let showInfo = {
-      name: null,
-      date: null
-    };
+    if (lines.length === 0) {
+      return { items: [], showInfo: { name: null, date: null }, fileName: file.name };
+    }
     
-    for (let i = 0; i < lines.length; i++) {
+    const items = [];
+    
+    // First row is header
+    const headerLine = lines[0];
+    const headers = headerLine.split(',').map(col => col.trim().toLowerCase());
+    
+    // Validate header columns in exact order: Part Number, Description, Quantity
+    const expectedHeaders = ['part number', 'description', 'quantity'];
+    const matchesExpected = expectedHeaders.every((expected, index) => {
+      return headers[index] && headers[index].includes(expected.split(' ')[0]);
+    });
+    
+    if (!matchesExpected) {
+      throw new Error('CSV must have columns in order: Part Number, Description, Quantity');
+    }
+    
+    // Parse data rows (starting from row 1)
+    for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
+      if (!line) continue;
       
-      // Look for "Product Totals" section
-      if (line.toUpperCase().includes('PRODUCT TOTALS')) {
-        inProductTotals = true;
-        headerFound = false;
-        continue;
-      }
+      const columns = line.split(',').map(col => col.trim());
       
-      // If we're in Product Totals section
-      if (inProductTotals) {
-        // Check if this is the header row (contains pipe or tab separators)
-        if (!headerFound && (line.includes('|') || line.includes('\t'))) {
-          // Likely a header row like "Part Number | Description | Quantity"
-          if (line.toLowerCase().includes('part number') || 
-              line.toLowerCase().includes('description') || 
-              line.toLowerCase().includes('quantity')) {
-            headerFound = true;
-            continue;
-          }
-        }
-        
-        // Parse data rows
-        if (headerFound) {
-          // Split by pipe or tab
-          const separator = line.includes('|') ? '|' : '\t';
-          const columns = line.split(separator).map(col => col.trim());
-          
-          // Skip if not enough columns
-          if (columns.length < 3) {
-            // Could be end of Product Totals section
-            if (line.toLowerCase().includes('total') || line === '') {
-              break;
-            }
-            continue;
-          }
-          
-          // Try to parse as: Part Number | Description | Quantity
-          const partNumber = columns[0];
-          const description = columns[1];
-          const quantityStr = columns[2];
-          
-          // Skip if Part Number is empty or looks like a header
-          if (!partNumber || partNumber.toLowerCase().includes('part') || 
-              partNumber.toLowerCase().includes('total')) {
-            continue;
-          }
-          
-          const quantity = parseInt(quantityStr);
-          
-          // Only add if quantity is a valid number
-          if (!isNaN(quantity) && quantity > 0) {
-            items.push({
-              partNumber: partNumber,
-              description: description,
-              quantity: quantity
-            });
-          }
-        }
+      if (columns.length < 3) continue;
+      
+      const partNumber = columns[0];
+      const description = columns[1];
+      const quantityStr = columns[2];
+      
+      // Skip if Part Number is empty
+      if (!partNumber) continue;
+      
+      const quantity = parseInt(quantityStr);
+      
+      // Only add if quantity is a valid number
+      if (!isNaN(quantity) && quantity > 0) {
+        items.push({
+          partNumber: partNumber,
+          description: description,
+          quantity: quantity
+        });
       }
     }
     
     return {
       items,
-      showInfo,
+      showInfo: { name: null, date: null },
       fileName: file.name
     };
   } catch (error) {
@@ -702,21 +679,62 @@ export const parseShootListCSV = async (file) => {
 // Parse Excel shoot list (XLSX/XLS format)
 export const parseShootListExcel = async (file) => {
   try {
-    // For Excel files, we need to convert to CSV first
-    // or use a library like xlsx
-    // For now, use the same CSV parser after converting
+    const data = new Uint8Array(await file.arrayBuffer());
+    const workbook = XLSX.read(data, { type: 'array' });
     
-    // Try to use a simple approach: read as text if possible
-    // This is a simplified implementation
-    const text = await file.text();
+    // Use first sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
     
-    // If it's tab-separated or pipe-separated, use CSV parser
-    if (text.includes('\t') || text.includes('|')) {
-      return parseShootListCSV(file);
+    // Convert to JSON with headers
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    
+    if (jsonData.length === 0) {
+      return { items: [], showInfo: { name: null, date: null }, fileName: file.name };
     }
     
-    // Otherwise, throw error asking for CSV format
-    throw new Error('Excel files should be exported as CSV with pipe (|) or tab separators');
+    // Get column names from first row
+    const headers = Object.keys(jsonData[0]).map(h => h.toLowerCase());
+    
+    // Validate header columns in exact order: Part Number, Description, Quantity
+    const expectedHeaders = ['part number', 'description', 'quantity'];
+    const matchesExpected = expectedHeaders.every((expected, index) => {
+      return headers[index] && headers[index].includes(expected.split(' ')[0]);
+    });
+    
+    if (!matchesExpected) {
+      throw new Error('Excel must have columns in order: Part Number, Description, Quantity');
+    }
+    
+    const items = [];
+    const originalHeaders = Object.keys(jsonData[0]);
+    
+    // Parse each row
+    jsonData.forEach(row => {
+      const partNumber = String(row[originalHeaders[0]] || '').trim();
+      const description = String(row[originalHeaders[1]] || '').trim();
+      const quantityStr = row[originalHeaders[2]];
+      
+      // Skip if Part Number is empty
+      if (!partNumber) return;
+      
+      const quantity = parseInt(quantityStr);
+      
+      // Only add if quantity is a valid number
+      if (!isNaN(quantity) && quantity > 0) {
+        items.push({
+          partNumber: partNumber,
+          description: description,
+          quantity: quantity
+        });
+      }
+    });
+    
+    return {
+      items,
+      showInfo: { name: null, date: null },
+      fileName: file.name
+    };
   } catch (error) {
     console.error('Error parsing shoot list Excel:', error);
     throw new Error('Failed to parse shoot list Excel: ' + error.message);

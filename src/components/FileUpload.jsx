@@ -29,7 +29,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const title = isInvoice ? 'Upload Invoice' : 'Upload Shoot List';
   const description = isInvoice 
     ? 'Add inventory from invoice (PDF from vendor or generic CSV/Excel)'
-    : 'Subtract used items from shoot list (PDF, Excel, CSV, JSON)';
+    : 'Subtract used items from shoot list (Finale 3D PDF or CSV/Excel)';
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -476,7 +476,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
              </div>
            )}
 
-           {/* Shoot List Format Guide - only show for shoot lists */}
+           {/* Shoot List Format Guide - PDF */}
            {!isInvoice && (
              <div className="shootlist-format-guide" style={{
                background: '#f0f7ff',
@@ -487,12 +487,9 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                fontSize: '13px',
                color: '#0c4a8a'
              }}>
-               <strong>📋 Shoot List Format (Product Totals):</strong>
+               <strong>📄 PDF Shoot List (Finale 3D Report):</strong>
                <p style={{ margin: '8px 0 4px 0' }}>
-                 Supported formats: <strong>PDF, CSV, Excel (.xlsx/.xls), TXT</strong>
-               </p>
-               <p style={{ margin: '8px 0 4px 0' }}>
-                 Your file should contain a "Product Totals" section with this layout:
+                 Finale 3D pyrotechnics show report with "Product Totals" section
                </p>
                <div style={{ 
                  background: 'white', 
@@ -504,20 +501,54 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                  fontSize: '11px',
                  overflowX: 'auto'
                }}>
-                 <div><strong>Product Totals</strong></div>
+                 <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Product Totals</div>
                  <div>Part Number | Description | Quantity</div>
                  <div>CM202A | Chrysanthemum Shell | 24</div>
                  <div>PFX30 | Palm Cake | 12</div>
                </div>
-               <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
-                 <li>Section header: <strong>"Product Totals"</strong> (exact text)</li>
-                 <li>Column separators: <strong>| (pipe)</strong> or <strong>tabs</strong></li>
-                 <li>Required columns: <strong>Part Number | Description | Quantity</strong></li>
-                 <li>Quantity = total items used in show</li>
+               <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
+                 <li>Export directly from Finale 3D (File → Export...)</li>
+                 <li>Must include "Product Totals" section</li>
+                 <li>System extracts items automatically</li>
                </ul>
-               <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#0c5aa6' }}>
-                 💡 Typically from Finale 3D exports, text files, or spreadsheets
+             </div>
+           )}
+
+           {/* Shoot List Format Guide - CSV/Excel */}
+           {!isInvoice && (
+             <div className="shootlist-format-guide" style={{
+               background: '#fff3e0',
+               border: '1px solid #ffe0b2',
+               padding: '12px 16px',
+               marginTop: '12px',
+               borderRadius: '4px',
+               fontSize: '13px',
+               color: '#a6500a'
+             }}>
+               <strong>📋 CSV / Excel Shoot List Format:</strong>
+               <p style={{ margin: '8px 0 4px 0' }}>
+                 Create a spreadsheet or CSV text file with these columns in order:
                </p>
+               <div style={{ 
+                 background: 'white', 
+                 border: '1px solid #ffe0b2',
+                 padding: '8px 12px', 
+                 margin: '8px 0',
+                 borderRadius: '3px',
+                 fontFamily: 'monospace',
+                 fontSize: '11px',
+                 overflowX: 'auto'
+               }}>
+                 <div>Part Number,Description,Quantity</div>
+                 <div>CM202A,Chrysanthemum Shell,24</div>
+                 <div>PFX30,Palm Cake,12</div>
+               </div>
+               <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
+                 <li>First row: Column headers <strong>(exact order required)</strong></li>
+                 <li>Column order: <strong>Part Number, Description, Quantity</strong></li>
+                 <li>Comma-separated values (standard CSV format)</li>
+                 <li>File types: .csv, .xlsx, .xls</li>
+               </ul>
              </div>
            )}
         </>
