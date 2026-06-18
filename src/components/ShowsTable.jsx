@@ -1,7 +1,41 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import './ShowsTable.css';
 
 function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
+  const [sortColumn, setSortColumn] = useState('date');
+  const [sortDirection, setSortDirection] = useState('desc');
+
+  // Sort shows based on current sort state
+  const sortedShows = useMemo(() => {
+    return [...shows].sort((a, b) => {
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
+      
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+      
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [shows, sortColumn, sortDirection]);
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortColumn !== column) return null;
+    return <span className="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>;
+  };
+
   if (shows.length === 0) {
     return (
       <div className="empty-state">
@@ -51,7 +85,9 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
           <thead>
            <tr>
              <th>Show Name</th>
-             <th>Show Date</th>
+             <th onClick={() => handleSort('date')} className="sortable">
+               Show Date <SortIcon column="date" />
+             </th>
              <th>Total Items</th>
              <th>Not in Inventory</th>
              <th>Total Value</th>
@@ -59,7 +95,7 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
            </tr>
          </thead>
           <tbody>
-            {shows.map((show) => {
+            {sortedShows.map((show) => {
               // Calculate total items (sum of all quantities)
               const totalItems = show.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
               
