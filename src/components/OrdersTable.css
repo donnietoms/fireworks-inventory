@@ -67,36 +67,46 @@
 /* Column width distribution */
 .orders-table th:nth-child(1), /* Date */
 .orders-table td:nth-child(1) {
-  width: 15%;
-  min-width: 140px;
+  width: 11%;
+  min-width: 110px;
 }
 
 .orders-table th:nth-child(2), /* Vendor */
 .orders-table td:nth-child(2) {
-  width: 20%;
-  min-width: 150px;
+  width: 16%;
+  min-width: 130px;
 }
 
 .orders-table th:nth-child(3), /* Order Number */
 .orders-table td:nth-child(3) {
-  width: 15%;
-  min-width: 120px;
-}
-
-.orders-table th:nth-child(4), /* Subtotal */
-.orders-table td:nth-child(4),
-.orders-table th:nth-child(5), /* Discount */
-.orders-table td:nth-child(5),
-.orders-table th:nth-child(6), /* Total */
-.orders-table td:nth-child(6) {
-  width: 12%;
+  width: 11%;
   min-width: 100px;
 }
 
-.orders-table th:nth-child(7), /* Actions */
-.orders-table td:nth-child(7) {
+.orders-table th:nth-child(4), /* Product Count */
+.orders-table td:nth-child(4),
+.orders-table th:nth-child(5), /* Total Quantity */
+.orders-table td:nth-child(5) {
+  width: 9%;
+  min-width: 85px;
+  text-align: right;
+}
+
+.orders-table th:nth-child(6), /* Subtotal */
+.orders-table td:nth-child(6),
+.orders-table th:nth-child(7), /* Discount */
+.orders-table td:nth-child(7),
+.orders-table th:nth-child(8), /* Total */
+.orders-table td:nth-child(8) {
+  width: 9%;
+  min-width: 85px;
+  text-align: right;
+}
+
+.orders-table th:nth-child(9), /* Actions */
+.orders-table td:nth-child(9) {
   width: 16%;
-  min-width: 150px;
+  min-width: 145px;
 }
 
 .orders-table th {
@@ -105,14 +115,13 @@
   text-align: left;
   font-weight: 600;
   color: #333;
-  cursor: pointer;
   user-select: none;
   border-bottom: 2px solid #e0e0e0;
   vertical-align: top;
   font-size: 15px;
 }
 
-.orders-table th:hover {
+.orders-table th[style*="cursor: pointer"]:hover {
   background: #eee;
 }
 

@@ -452,6 +452,7 @@ function InventoryApp({ user }) {
             </div>
             <OrdersTable
               orders={orders}
+              inventory={inventory}
               onUpdate={updateOrder}
               onDelete={handleDeleteOrder}
               onEdit={handleEditOrder}

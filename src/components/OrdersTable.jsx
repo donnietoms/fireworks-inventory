@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { API_BASE_URL } from '../config';
 import './OrdersTable.css';
 
-const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) => {
+const OrdersTable = ({ orders, inventory = [], onUpdate, onDelete, onEdit, onViewInventory }) => {
   const [sortField, setSortField] = useState('orderDate');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filter, setFilter] = useState('');
@@ -110,23 +110,29 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
         <table className="orders-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('orderDate')}>
+              <th onClick={() => handleSort('orderDate')} style={{ cursor: 'pointer' }}>
                 Order Date <SortIcon field="orderDate" />
               </th>
-              <th onClick={() => handleSort('vendor')}>
+              <th onClick={() => handleSort('vendor')} style={{ cursor: 'pointer' }}>
                 Vendor <SortIcon field="vendor" />
               </th>
-              <th onClick={() => handleSort('orderNumber')}>
-                Order Number <SortIcon field="orderNumber" />
+              <th>
+                Order Number
               </th>
-              <th onClick={() => handleSort('subtotal')}>
-                Subtotal <SortIcon field="subtotal" />
+              <th>
+                Product Count
               </th>
-              <th onClick={() => handleSort('discount')}>
-                Discount <SortIcon field="discount" />
+              <th>
+                Total Quantity
               </th>
-              <th onClick={() => handleSort('total')}>
-                Total <SortIcon field="total" />
+              <th>
+                Subtotal
+              </th>
+              <th>
+                Discount
+              </th>
+              <th>
+                Total
               </th>
               <th>Actions</th>
             </tr>
@@ -134,37 +140,46 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
           <tbody>
             {displayedOrders.length === 0 ? (
               <tr>
-                <td colSpan="7" className="empty-message">
+                <td colSpan="9" className="empty-message">
                   No orders recorded. Upload an invoice to create an order record.
                 </td>
               </tr>
             ) : (
-              displayedOrders.map(order => (
-                <tr key={order.id}>
-                   <td>{formatDate(order.orderDate)}</td>
-                  <td>{order.vendor}</td>
-                  <td>{order.orderNumber}</td>
-                  <td className="amount">${order.subtotal.toFixed(2)}</td>
-                  <td className="amount">${order.discount.toFixed(2)}</td>
-                  <td className="amount total">${order.total.toFixed(2)}</td>
-                  <td className="actions">
-                    <button 
-                      onClick={() => onViewInventory(order.orderNumber)} 
-                      className="btn-inventory" 
-                      title="View Inventory"
-                    >
-                      📦
-                    </button>
-                    {order.invoiceFile && (
-                      <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
-                        📄
+              displayedOrders.map(order => {
+                // Calculate product count and total quantity for this order
+                const orderItems = inventory.filter(item => item.orderNumber === order.orderNumber);
+                const productCount = orderItems.length;
+                const totalQuantity = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                
+                return (
+                  <tr key={order.id}>
+                    <td>{formatDate(order.orderDate)}</td>
+                    <td>{order.vendor}</td>
+                    <td>{order.orderNumber}</td>
+                    <td className="amount">{productCount}</td>
+                    <td className="amount">{totalQuantity.toLocaleString()}</td>
+                    <td className="amount">${order.subtotal.toFixed(2)}</td>
+                    <td className="amount">${order.discount.toFixed(2)}</td>
+                    <td className="amount total">${order.total.toFixed(2)}</td>
+                    <td className="actions">
+                      <button 
+                        onClick={() => onViewInventory(order.orderNumber)} 
+                        className="btn-inventory" 
+                        title="View Inventory"
+                      >
+                        📦
                       </button>
-                    )}
-                    <button onClick={() => onEdit(order)} className="btn-edit">Edit</button>
-                    <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
-                  </td>
-                </tr>
-              ))
+                      {order.invoiceFile && (
+                        <button onClick={() => handleViewInvoice(order)} className="btn-view" title="View Invoice">
+                          📄
+                        </button>
+                      )}
+                      <button onClick={() => onEdit(order)} className="btn-edit">Edit</button>
+                      <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -19,6 +19,56 @@ export async function parseWisleyPDF(pdfPath) {
       discount: 0
     };
     
+    // First pass: Extract order info from ALL lines
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Extract order number
+      const orderMatch = line.match(/ORDER NUMBER:\s*(\S+)/i) || line.match(/SALE NUMBER:\s*(\S+)/i);
+      if (orderMatch) {
+        orderInfo.orderNumber = orderMatch[1];
+      }
+      
+      // Extract order date
+      if (!orderInfo.orderDate) {
+        const dateMatch1 = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+        if (dateMatch1) {
+          let month = dateMatch1[1].padStart(2, '0');
+          let day = dateMatch1[2].padStart(2, '0');
+          let year = dateMatch1[3];
+          if (year.length === 2) {
+            year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+          }
+          orderInfo.orderDate = `${year}-${month}-${day}`;
+        }
+      }
+      
+      // Extract subtotal
+      if (line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i)) {
+        const subtotalMatch = line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i);
+        orderInfo.subtotal = parseFloat(subtotalMatch[1].replace(/,/g, ''));
+      }
+      
+      // Extract discount - accumulate if multiple discount lines
+      if (line.match(/discount/i)) {
+        const discountMatch = line.match(/([0-9,]+\.[0-9]+)/);
+        if (discountMatch) {
+          const discountValue = parseFloat(discountMatch[1].replace(/,/g, ''));
+          orderInfo.discount += discountValue;
+          console.log(`Found discount on line ${i + 1}: "${line.trim()}", value: ${discountValue}, running total: ${orderInfo.discount}`);
+        }
+      }
+      
+      // Extract total
+      if (line.includes('Total:') && !line.includes('Subtotal:')) {
+        const totalMatch = line.match(/Total:\s*([\d,]+\.?\d*)\s*$/i);
+        if (totalMatch) {
+          orderInfo.total = parseFloat(totalMatch[1].replace(/,/g, ''));
+        }
+      }
+    }
+    
+    // Second pass: Extract items
     let inDataSection = false;
     
     for (let i = 0; i < lines.length; i++) {
@@ -27,55 +77,13 @@ export async function parseWisleyPDF(pdfPath) {
       // Skip empty lines
       if (!line.trim()) continue;
       
-      // Extract order number (anywhere in document)
-      const orderMatch = line.match(/ORDER NUMBER:\s*(\S+)/i) || line.match(/SALE NUMBER:\s*(\S+)/i);
-      if (orderMatch) {
-        orderInfo.orderNumber = orderMatch[1];
-      }
-      
-      // Extract order date (match patterns like "06/14/23" or "6/14/2023" or "June 14, 2023")
-      if (!orderInfo.orderDate) {
-        // Try MM/DD/YY format
-        const dateMatch1 = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-        if (dateMatch1) {
-          let month = dateMatch1[1].padStart(2, '0');
-          let day = dateMatch1[2].padStart(2, '0');
-          let year = dateMatch1[3];
-          // Convert 2-digit year to 4-digit
-          if (year.length === 2) {
-            year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
-          }
-          orderInfo.orderDate = `${year}-${month}-${day}`;
-        }
-      }
-      
-      // Extract subtotal (anywhere in document)
-      if (line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i)) {
-        const subtotalMatch = line.match(/Subtotal:\s*([\d,]+\.?\d*)\s*$/i);
-        orderInfo.subtotal = parseFloat(subtotalMatch[1].replace(/,/g, ''));
-      }
-      
-      // Extract discount (anywhere in document)
-      if (line.match(/Discount:\s*-?\s*([\d,]+\.?\d*)\s*$/i)) {
-        const discountMatch = line.match(/Discount:\s*-?\s*([\d,]+\.?\d*)\s*$/i);
-        orderInfo.discount = parseFloat(discountMatch[1].replace(/,/g, ''));
-      }
-      
-      // Extract total (anywhere in document)
-      if (line.includes('Total:') && !line.includes('Subtotal:')) {
-        const totalMatch = line.match(/Total:\s*([\d,]+\.?\d*)\s*$/i);
-        if (totalMatch) {
-          orderInfo.total = parseFloat(totalMatch[1].replace(/,/g, ''));
-        }
-      }
-      
       // Look for the header row to start data section
       if (line.includes('Product ID') && line.includes('Description')) {
         inDataSection = true;
         continue;
       }
       
-      // Skip non-data lines (continue to next line for order info extraction)
+      // Skip non-data lines
       if (!inDataSection) continue;
       
       // Try to parse as product line (will return null for non-product lines)

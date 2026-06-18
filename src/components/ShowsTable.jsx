@@ -14,7 +14,13 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
     if (!dateStr) return 'N/A';
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch {
       return dateStr;
     }
@@ -41,32 +47,38 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
   return (
     <div className="shows-table-container">
       <table className="shows-table">
-         <thead>
+          <thead>
            <tr>
              <th>Show Name</th>
              <th>Show Date</th>
              <th>Total Items</th>
+             <th>Not in Inventory</th>
              <th>Total Value</th>
-             <th>Created</th>
              <th>Actions</th>
            </tr>
          </thead>
-        <tbody>
-          {shows.map((show) => (
-            <tr key={show.id}>
-              <td>
-                <button 
-                  className="link-button"
-                  onClick={() => onViewDetails(show.id)}
-                >
-                  {show.name}
-                </button>
-              </td>
-                <td>{formatShowDate(show.date)}</td>
-               <td>{show.totalItems}</td>
-              <td>{formatCurrency(show.totalValue)}</td>
-              <td>{formatDate(show.createdAt)}</td>
-              <td>
+         <tbody>
+           {shows.map((show) => {
+             // Calculate items not in inventory
+             const notInInventory = show.items?.filter(item => !item.inInventory).length || 0;
+             
+             return (
+             <tr key={show.id}>
+               <td>
+                 <button 
+                   className="link-button"
+                   onClick={() => onViewDetails(show.id)}
+                 >
+                   {show.name}
+                 </button>
+               </td>
+                 <td>{formatShowDate(show.date)}</td>
+                <td>{show.totalItems}</td>
+                <td style={{ color: notInInventory > 0 ? '#ff6b35' : '#666' }}>
+                  {notInInventory}
+                </td>
+                <td>{formatCurrency(show.totalValue)}</td>
+               <td>
                 <button
                   className="btn-view"
                   onClick={() => onViewDetails(show.id)}
@@ -92,9 +104,10 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
                 >
                   🗑️
                 </button>
-              </td>
-            </tr>
-          ))}
+               </td>
+             </tr>
+             );
+           })}
         </tbody>
       </table>
     </div>

@@ -10,6 +10,7 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
   
   const [items, setItems] = useState([]);
   const [editingItemIndex, setEditingItemIndex] = useState(null); // Track which item is being edited
+  const [partNumberSearches, setPartNumberSearches] = useState({}); // Track search input for each dropdown
   const [currentItem, setCurrentItem] = useState({
     partNumber: '',
     description: '',
@@ -333,34 +334,213 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
                     <th></th>
                   </tr>
                 </thead>
-                <tbody>
-                  {items.map((item, index) => (
-                    <tr key={index} style={editingItemIndex === index ? { backgroundColor: '#fff3cd' } : {}}>
-                      <td>{item.partNumber}</td>
-                      <td>{item.description}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.cost.toFixed(2)}</td>
-                      <td>${(item.quantity * item.cost).toFixed(2)}</td>
-                      <td>
-                        <button 
-                          type="button" 
-                          onClick={() => editItem(index)}
-                          className="btn-edit"
-                          style={{ marginRight: '5px' }}
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => removeItem(index)}
-                          className="btn-remove"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                 <tbody>
+                   {items
+                     .slice() // Create a copy to avoid mutating original array
+                     .sort((a, b) => {
+                       // Sort items not in inventory to the top
+                       if (a.inInventory === false && b.inInventory !== false) return -1;
+                       if (a.inInventory !== false && b.inInventory === false) return 1;
+                       return 0;
+                     })
+                     .map((item, displayIndex) => {
+                       // Find original index in unsorted items array
+                       const originalIndex = items.findIndex(i => i === item);
+                       const notInInventory = item.inInventory === false;
+                       const isEditing = editingItemIndex === originalIndex;
+                       
+                       return (
+                         <tr 
+                           key={originalIndex} 
+                           style={{
+                             backgroundColor: isEditing 
+                               ? '#fff3cd' 
+                               : notInInventory 
+                                 ? '#ffebee' 
+                                 : 'transparent',
+                             borderLeft: notInInventory ? '3px solid #d32f2f' : 'none'
+                           }}
+                         >
+                           <td style={{ fontWeight: notInInventory ? 'bold' : 'normal', position: 'relative' }}>
+                             {notInInventory && !isEditing ? (
+                               <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                                 <button
+                                   type="button"
+                                   onClick={() => setPartNumberSearches({
+                                     ...partNumberSearches,
+                                     [originalIndex]: partNumberSearches[originalIndex] === undefined ? '' : undefined
+                                   })}
+                                   style={{
+                                     width: '100%',
+                                     padding: '4px 8px',
+                                     border: '1px solid #d32f2f',
+                                     borderRadius: '4px',
+                                     backgroundColor: '#ffebee',
+                                     fontSize: '14px',
+                                     cursor: 'pointer',
+                                     textAlign: 'left',
+                                     display: 'flex',
+                                     justifyContent: 'space-between',
+                                     alignItems: 'center',
+                                     fontWeight: 'bold'
+                                   }}
+                                 >
+                                   <span>{item.partNumber} ⚠️ Not in inventory</span>
+                                   <span>▼</span>
+                                 </button>
+                                 {partNumberSearches[originalIndex] !== undefined && (
+                                   <div style={{
+                                     position: 'absolute',
+                                     top: '100%',
+                                     left: 0,
+                                     right: 0,
+                                     backgroundColor: '#fff',
+                                     border: '1px solid #d32f2f',
+                                     borderTop: 'none',
+                                     borderRadius: '0 0 4px 4px',
+                                     boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                                     zIndex: 10,
+                                     minWidth: '200px'
+                                   }}>
+                                     {/* Search input at top */}
+                                     <input
+                                       type="text"
+                                       placeholder="Search..."
+                                       value={partNumberSearches[originalIndex]}
+                                       onChange={(e) => setPartNumberSearches({
+                                         ...partNumberSearches,
+                                         [originalIndex]: e.target.value
+                                       })}
+                                       onClick={(e) => e.stopPropagation()}
+                                       autoFocus
+                                       style={{
+                                         width: '100%',
+                                         padding: '8px',
+                                         border: 'none',
+                                         borderBottom: '1px solid #f0f0f0',
+                                         fontSize: '13px',
+                                         boxSizing: 'border-box',
+                                         backgroundColor: '#f9f9f9'
+                                       }}
+                                     />
+                                     {/* Dropdown list */}
+                                     <div style={{
+                                       maxHeight: '250px',
+                                       overflowY: 'auto'
+                                     }}>
+                                       {/* Original item (not in inventory) option */}
+                                       <div
+                                         onClick={() => {
+                                           setPartNumberSearches({
+                                             ...partNumberSearches,
+                                             [originalIndex]: undefined
+                                           });
+                                         }}
+                                         style={{
+                                           padding: '8px 12px',
+                                           cursor: 'pointer',
+                                           backgroundColor: '#ffebee',
+                                           borderBottom: '1px solid #f0f0f0',
+                                           fontSize: '13px'
+                                         }}
+                                       >
+                                         {item.partNumber} (not in inventory)
+                                       </div>
+                                       {/* Divider */}
+                                       <div style={{ borderBottom: '2px solid #eee' }} />
+                                       {/* Filtered inventory options */}
+                                       {Array.from(new Set(inventory.map(inv => inv.partNumber)))
+                                         .sort()
+                                         .filter(partNum => {
+                                           const invItem = inventory.find(inv => inv.partNumber === partNum);
+                                           const searchTerm = partNumberSearches[originalIndex].toLowerCase();
+                                           return partNum.toLowerCase().includes(searchTerm) || 
+                                                  invItem.description.toLowerCase().includes(searchTerm);
+                                         })
+                                         .map(partNum => {
+                                           const invItem = inventory.find(inv => inv.partNumber === partNum);
+                                           return (
+                                             <div
+                                               key={partNum}
+                                               onClick={() => {
+                                                 // Update the item with the selected part number and inventory info
+                                                 const updatedItems = [...items];
+                                                 updatedItems[originalIndex] = {
+                                                   ...updatedItems[originalIndex],
+                                                   partNumber: partNum,
+                                                   description: invItem.description,
+                                                   cost: invItem.cost,
+                                                   inInventory: true
+                                                 };
+                                                 setItems(updatedItems);
+                                                 setPartNumberSearches({
+                                                   ...partNumberSearches,
+                                                   [originalIndex]: undefined
+                                                 });
+                                               }}
+                                               style={{
+                                                 padding: '8px 12px',
+                                                 cursor: 'pointer',
+                                                 backgroundColor: '#fff',
+                                                 borderBottom: '1px solid #f0f0f0',
+                                                 fontSize: '13px'
+                                               }}
+                                               onMouseOver={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                               onMouseOut={(e) => e.target.style.backgroundColor = '#fff'}
+                                             >
+                                               <div style={{ fontWeight: 'bold' }}>{partNum}</div>
+                                               <div style={{ fontSize: '11px', color: '#666' }}>{invItem.description}</div>
+                                             </div>
+                                           );
+                                         })
+                                       }
+                                       {Array.from(new Set(inventory.map(inv => inv.partNumber)))
+                                         .filter(partNum => {
+                                           const invItem = inventory.find(inv => inv.partNumber === partNum);
+                                           const searchTerm = partNumberSearches[originalIndex].toLowerCase();
+                                           return partNum.toLowerCase().includes(searchTerm) || 
+                                                  invItem.description.toLowerCase().includes(searchTerm);
+                                         }).length === 0 && (
+                                         <div style={{ padding: '12px', color: '#999', textAlign: 'center', fontSize: '13px' }}>
+                                           No matching part numbers
+                                         </div>
+                                       )}
+                                     </div>
+                                   </div>
+                                 )}
+                               </div>
+                             ) : (
+                               <>
+                                 {item.partNumber}
+                                 {notInInventory && <span style={{ color: '#d32f2f', marginLeft: '8px' }}>⚠️ Not in inventory</span>}
+                               </>
+                             )}
+                           </td>
+                           <td>{item.description}</td>
+                           <td>{item.quantity}</td>
+                           <td>${item.cost.toFixed(2)}</td>
+                           <td>${(item.quantity * item.cost).toFixed(2)}</td>
+                           <td>
+                             <button 
+                               type="button" 
+                               onClick={() => editItem(originalIndex)}
+                               className="btn-edit"
+                               style={{ marginRight: '5px' }}
+                             >
+                               ✏️
+                             </button>
+                             <button 
+                               type="button" 
+                               onClick={() => removeItem(originalIndex)}
+                               className="btn-remove"
+                             >
+                               ✕
+                             </button>
+                           </td>
+                         </tr>
+                       );
+                     })}
+                 </tbody>
                 <tfoot>
                   <tr className="totals-row">
                     <td colSpan="2"><strong>TOTALS</strong></td>
