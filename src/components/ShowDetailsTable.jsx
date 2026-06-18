@@ -37,16 +37,16 @@ function ShowDetailsTable({ show, onBack }) {
           <button 
             onClick={() => exportShowToCSV(show)} 
             className="btn-export"
-            title="Export Show to CSV"
+            title="Export to CSV"
           >
-            📥 CSV
+            ⬇️ CSV
           </button>
           <button 
             onClick={() => exportShowToExcel(show)} 
             className="btn-export"
-            title="Export Show to Excel"
+            title="Export to Excel"
           >
-            📥 XLS
+            ⬇️ XLS
           </button>
         </div>
       </div>

@@ -571,7 +571,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                               onClick={() => updateEditingItem()}
                               className="btn-save"
                               style={{ marginRight: '5px' }}
-                              title="Save changes"
+                              title="Save"
                             >
                               ✓
                             </button>
@@ -579,7 +579,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                               type="button" 
                               onClick={() => setEditingItemIndex(null)}
                               className="btn-cancel"
-                              title="Cancel editing"
+                              title="Cancel"
                             >
                               ✕
                             </button>
@@ -591,6 +591,7 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                               onClick={() => editItem(index)}
                               className="btn-edit"
                               style={{ marginRight: '5px' }}
+                              title="Edit"
                             >
                               ✏️
                             </button>
@@ -598,8 +599,9 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                               type="button" 
                               onClick={() => removeItem(index)}
                               className="btn-remove"
+                              title="Delete"
                             >
-                              ✕
+                              🗑️
                             </button>
                           </>
                         )}

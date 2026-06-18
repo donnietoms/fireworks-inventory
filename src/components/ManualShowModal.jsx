@@ -518,21 +518,23 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
                            <td>${item.cost.toFixed(2)}</td>
                            <td>${(item.quantity * item.cost).toFixed(2)}</td>
                            <td>
-                             <button 
-                               type="button" 
-                               onClick={() => editItem(originalIndex)}
-                               className="btn-edit"
-                               style={{ marginRight: '5px' }}
-                             >
-                               ✏️
-                             </button>
-                             <button 
-                               type="button" 
-                               onClick={() => removeItem(originalIndex)}
-                               className="btn-remove"
-                             >
-                               ✕
-                             </button>
+                              <button 
+                                type="button" 
+                                onClick={() => editItem(originalIndex)}
+                                className="btn-edit"
+                                style={{ marginRight: '5px' }}
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => removeItem(originalIndex)}
+                                className="btn-remove"
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
                            </td>
                           </tr>
                         );

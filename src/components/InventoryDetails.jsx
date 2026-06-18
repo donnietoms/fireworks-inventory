@@ -97,7 +97,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                         onDelete(item.id);
                       }
                     }}
-                    title="Delete Line Item"
+                    title="Delete"
                   >
                     🗑️
                   </button>

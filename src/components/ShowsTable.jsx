@@ -57,27 +57,30 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
              <th>Actions</th>
            </tr>
          </thead>
-         <tbody>
-           {shows.map((show) => {
-             // Calculate items not in inventory
-             const notInInventory = show.items?.filter(item => !item.inInventory).length || 0;
-             
-             return (
-             <tr key={show.id}>
-               <td>
-                 <button 
-                   className="link-button"
-                   onClick={() => onViewDetails(show.id)}
-                 >
-                   {show.name}
-                 </button>
-               </td>
-                 <td>{formatShowDate(show.date)}</td>
-                <td>{show.totalItems}</td>
-                <td style={{ color: notInInventory > 0 ? '#ff6b35' : '#666' }}>
-                  {notInInventory}
+          <tbody>
+            {shows.map((show) => {
+              // Calculate total items (sum of all quantities)
+              const totalItems = show.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+              
+              // Calculate items not in inventory
+              const notInInventory = show.items?.filter(item => !item.inInventory).length || 0;
+              
+              return (
+              <tr key={show.id}>
+                <td>
+                  <button 
+                    className="link-button"
+                    onClick={() => onViewDetails(show.id)}
+                  >
+                    {show.name}
+                  </button>
                 </td>
-                <td>{formatCurrency(show.totalValue)}</td>
+                  <td>{formatShowDate(show.date)}</td>
+                 <td>{totalItems}</td>
+                 <td style={{ color: notInInventory > 0 ? '#ff6b35' : '#666' }}>
+                   {notInInventory}
+                 </td>
+                 <td>{formatCurrency(show.totalValue)}</td>
                 <td>
                  <button
                    className="btn-view"

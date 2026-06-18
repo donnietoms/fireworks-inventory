@@ -174,8 +174,8 @@ const OrdersTable = ({ orders, inventory = [], onUpdate, onDelete, onEdit, onVie
                           📄
                         </button>
                       )}
-                      <button onClick={() => onEdit(order)} className="btn-edit">Edit</button>
-                      <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete">Delete</button>
+                      <button onClick={() => onEdit(order)} className="btn-edit" title="Edit">✏️</button>
+                      <button onClick={() => onDelete(order.id, order.orderNumber)} className="btn-delete" title="Delete">🗑️</button>
                     </td>
                   </tr>
                 );
