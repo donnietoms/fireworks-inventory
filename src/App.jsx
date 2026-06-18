@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import InventoryApp from './InventoryApp';
+import AccountSettings from './pages/AccountSettings';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -41,6 +42,12 @@ function AppRoutes() {
       <Route path="/app" element={
         <ProtectedRoute>
           <InventoryApp />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/app/settings" element={
+        <ProtectedRoute>
+          <AccountSettings />
         </ProtectedRoute>
       } />
       

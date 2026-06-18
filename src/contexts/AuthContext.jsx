@@ -90,6 +90,30 @@ export const AuthProvider = ({ children }) => {
     return { data, error }
   }
 
+  // Update user password
+  const updatePassword = async (newPassword) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+    return { data, error }
+  }
+
+  // Delete user account
+  const deleteAccount = async () => {
+    if (!user) return { error: new Error('No user logged in') }
+    
+    // This will trigger cascade deletes via database rules
+    const { error } = await supabase.auth.admin.deleteUser(user.id)
+    
+    if (error) {
+      // Fallback: try using RPC function if it exists
+      const { error: rpcError } = await supabase.rpc('delete_user')
+      return { error: rpcError || error }
+    }
+    
+    return { error: null }
+  }
+
   const value = {
     user,
     session,
@@ -99,6 +123,8 @@ export const AuthProvider = ({ children }) => {
     signOut,
     getUserProfile,
     updateUserProfile,
+    updatePassword,
+    deleteAccount,
   }
 
   return (
