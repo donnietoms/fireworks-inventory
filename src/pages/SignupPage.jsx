@@ -12,7 +12,7 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,6 +39,25 @@ function SignupPage() {
         // Optionally redirect to login after a few seconds
         setTimeout(() => navigate('/login'), 3000);
       }
+    } catch (err) {
+      setError('An unexpected error occurred');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      }
+      // Note: Google OAuth will redirect automatically, no need to navigate here
     } catch (err) {
       setError('An unexpected error occurred');
       setLoading(false);
@@ -110,7 +129,12 @@ function SignupPage() {
             <span>or</span>
           </div>
 
-          <button className="btn-social btn-google">
+          <button 
+            type="button"
+            className="btn-social btn-google"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+          >
             <img src="https://www.google.com/favicon.ico" alt="" />
             Continue with Google
           </button>
