@@ -28,6 +28,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [needsVendorSelection, setNeedsVendorSelection] = useState(false);
   const [previewVendor, setPreviewVendor] = useState(null); // Vendor selected in preview
   const [packingEdits, setPackingEdits] = useState({}); // Store packing edits: { partNumber: { packagesPerCase, itemsPerPackage } }
+  const [missingPartNumbers, setMissingPartNumbers] = useState({}); // Store part number edits: { itemIndex: newPartNumber }
   const [isGenericImport, setIsGenericImport] = useState(false); // Track if this is a generic import
   const [genericOrderNumber, setGenericOrderNumber] = useState('');
   const [genericVendor, setGenericVendor] = useState('');
@@ -219,17 +220,26 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         return;
       }
       
-      // Apply packing edits to items before uploading (invoices only)
-      const updatedItems = isInvoice ? preview.items.map(item => {
-        if (packingEdits[item.partNumber]) {
-          const { packagesPerCase, itemsPerPackage } = packingEdits[item.partNumber];
+      // Apply packing edits and part number edits to items before uploading (invoices only)
+      const updatedItems = isInvoice ? preview.items.map((item, idx) => {
+        let updatedItem = { ...item };
+        
+        // Apply missing part number if provided
+        if (missingPartNumbers[idx]) {
+          updatedItem.partNumber = missingPartNumbers[idx];
+          updatedItem.needsPartNumber = false;
+        }
+        
+        // Apply packing edits
+        if (packingEdits[updatedItem.partNumber]) {
+          const { packagesPerCase, itemsPerPackage } = packingEdits[updatedItem.partNumber];
           const totalPacking = packagesPerCase * itemsPerPackage;
-          const totalItems = item.cases * packagesPerCase * itemsPerPackage;
-          const costPerItem = item.lineTotal / totalItems;
+          const totalItems = updatedItem.cases * packagesPerCase * itemsPerPackage;
+          const costPerItem = updatedItem.lineTotal / totalItems;
           
-          return {
-            ...item,
-            cases: item.cases, // Number of cases
+          updatedItem = {
+            ...updatedItem,
+            cases: updatedItem.cases, // Number of cases
             packing: totalPacking, // Total items per case (numeric)
             packagesPerCase,
             itemsPerPackage,
@@ -238,17 +248,34 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
             needsPacking: false
           };
         }
-        return item;
-      }) : preview.items.map(item => {
+        
+        return updatedItem;
+      }) : preview.items.map((item, idx) => {
+        let updatedItem = { ...item };
+        
+        // Apply missing part number if provided
+        if (missingPartNumbers[idx]) {
+          updatedItem.partNumber = missingPartNumbers[idx];
+          updatedItem.needsPartNumber = false;
+        }
+        
         // Apply part number edits for show list items
-        if (partNumberEdits[item.partNumber] && partNumberEdits[item.partNumber] !== item.partNumber) {
-          return {
-            ...item,
-            partNumber: partNumberEdits[item.partNumber]
+        if (partNumberEdits[updatedItem.partNumber] && partNumberEdits[updatedItem.partNumber] !== updatedItem.partNumber) {
+          updatedItem = {
+            ...updatedItem,
+            partNumber: partNumberEdits[updatedItem.partNumber]
           };
         }
-        return item;
+        
+        return updatedItem;
       });
+      
+      // Check if any items still need part numbers
+      const stillNeedPartNumbers = updatedItems.filter(i => i.needsPartNumber);
+      if (stillNeedPartNumbers.length > 0) {
+        alert(`Please enter part numbers for all items missing them.`);
+        return;
+      }
       
       // Check if any items still need packing (invoices only, but not for generic imports)
       if (isInvoice && !isGenericImport) {
@@ -795,6 +822,23 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
             </div>
           )}
           
+          {/* Warning for items missing part numbers */}
+          {preview.items.some(item => item.needsPartNumber) && (
+            <div className="part-number-warning" style={{
+              background: '#f8d7da',
+              border: '1px solid #f5c6cb',
+              padding: '12px',
+              marginBottom: '12px',
+              borderRadius: '4px'
+            }}>
+              <strong>⚠️ Missing Part Numbers</strong>
+              <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                {preview.items.filter(i => i.needsPartNumber).length} item(s) are missing part numbers.
+                Enter the part number in the table below before importing. Part numbers are required.
+              </p>
+            </div>
+          )}
+          
           {/* Warning for items missing packing */}
           {isInvoice && preview.items.some(item => item.needsPacking) && (
             <div className="packing-warning" style={{
@@ -855,11 +899,29 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                      inventoryCost = totalCost / inventoryQty;
                    }
                   
-                  return (
-                    <tr key={idx} style={item.needsPacking && !packingEdits[item.partNumber] ? { background: '#fff3cd' } : {}}>
-                      {isInvoice ? (
-                        <>
-                          <td>{item.partNumber}</td>
+                   return (
+                     <tr key={idx} style={(item.needsPacking && !packingEdits[item.partNumber]) || (item.needsPartNumber && !missingPartNumbers[idx]) ? { background: '#fff3cd' } : {}}>
+                       {isInvoice ? (
+                         <>
+                           <td>
+                             {item.needsPartNumber ? (
+                               <input
+                                 type="text"
+                                 placeholder="Enter part number"
+                                 value={missingPartNumbers[idx] || ''}
+                                 onChange={(e) => setMissingPartNumbers(prev => ({ ...prev, [idx]: e.target.value }))}
+                                 style={{ 
+                                   width: '100%', 
+                                   padding: '4px', 
+                                   border: '2px solid #f5c6cb', 
+                                   borderRadius: '4px',
+                                   background: '#fff'
+                                 }}
+                               />
+                             ) : (
+                               item.partNumber
+                             )}
+                           </td>
                           <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {item.description}
                           </td>
@@ -900,7 +962,21 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                          <>
                            <td>{item.size}</td>
                              <td>
-                               {hasInventory ? (
+                               {item.needsPartNumber ? (
+                                 <input
+                                   type="text"
+                                   placeholder="Enter part number"
+                                   value={missingPartNumbers[idx] || ''}
+                                   onChange={(e) => setMissingPartNumbers(prev => ({ ...prev, [idx]: e.target.value }))}
+                                   style={{ 
+                                     width: '100%', 
+                                     padding: '4px', 
+                                     border: '2px solid #f5c6cb', 
+                                     borderRadius: '4px',
+                                     background: '#fff'
+                                   }}
+                                 />
+                               ) : hasInventory ? (
                                  item.partNumber
                                ) : (
                                  <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>

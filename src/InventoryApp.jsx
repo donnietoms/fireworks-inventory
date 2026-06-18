@@ -488,8 +488,8 @@ function InventoryApp() {
         </div>
         <div className="header-actions">
           <span className="user-name">👤 {user?.name || user?.email}</span>
-          <button onClick={() => navigate('/app/settings')} className="btn-settings" title="Account Settings">
-            ⚙️ Settings
+          <button onClick={() => navigate('/app/settings')} className="btn-logout" title="View your profile and account settings">
+            Profile
           </button>
           <button onClick={handleLogout} className="btn-logout" title="Log out of the application">
             Logout

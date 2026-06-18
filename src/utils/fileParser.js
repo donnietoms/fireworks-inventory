@@ -84,6 +84,9 @@ const mapRowToItem = (row, columnMap) => {
     item.lineTotal = item.cost * item.quantity; // Calculate line total from cost and quantity
   }
   
+  // Flag items missing part number for manual entry
+  item.needsPartNumber = !item.partNumber || item.partNumber.trim() === '';
+  
   return item;
 };
 
@@ -416,12 +419,16 @@ export const parseFile = async (file) => {
           // Handle both array of items and wrapped format
           const items = Array.isArray(data) ? data : (data.items || data.inventory || []);
           resolve({
-            items: items.map(item => ({
-              partNumber: item.partNumber || item.part_number || item.sku || '',
-              description: item.description || item.name || item.desc || '',
-              quantity: parseNumber(item.quantity || item.qty || 0),
-              cost: parseNumber(item.cost || item.price || 0)
-            })),
+            items: items.map(item => {
+              const partNumber = item.partNumber || item.part_number || item.sku || '';
+              return {
+                partNumber,
+                description: item.description || item.name || item.desc || '',
+                quantity: parseNumber(item.quantity || item.qty || 0),
+                cost: parseNumber(item.cost || item.price || 0),
+                needsPartNumber: !partNumber || partNumber.trim() === ''
+              };
+            }),
             columnMap: {},
             headers: [],
             rawData: data
