@@ -430,36 +430,78 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
             )}
           </div>
           
-          {/* CSV Import Format Note - only show for invoices */}
-          {isInvoice && (
-            <div className="csv-import-note" style={{
-              background: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              padding: '12px 16px',
-              marginTop: '12px',
-              borderRadius: '4px',
-              fontSize: '13px',
-              color: '#495057'
-            }}>
-              <strong>📋 CSV Import Format:</strong>
-              <p style={{ margin: '8px 0 4px 0' }}>
-                For generic CSV/Excel files, your file should have a header row with these columns:
-              </p>
-              <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
-                <li><strong>Part Number</strong> (or Product ID, SKU, Item #)</li>
-                <li><strong>Description</strong> (or Name, Title)</li>
-                <li><strong>Quantity</strong> (total items, not cases)</li>
-                <li><strong>Cost</strong> (price per item)</li>
-              </ul>
-              <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
-                Example: Part Number,Description,Quantity,Cost<br/>
-                GM123,"Red Peony",24,5.50
-              </p>
-              <p style={{ margin: '8px 0 0 0' }}>
-                You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
-              </p>
-            </div>
-          )}
+           {/* CSV Import Format Note - only show for invoices */}
+           {isInvoice && (
+             <div className="csv-import-note" style={{
+               background: '#f8f9fa',
+               border: '1px solid #dee2e6',
+               padding: '12px 16px',
+               marginTop: '12px',
+               borderRadius: '4px',
+               fontSize: '13px',
+               color: '#495057'
+             }}>
+               <strong>📋 CSV Import Format:</strong>
+               <p style={{ margin: '8px 0 4px 0' }}>
+                 For generic CSV/Excel files, your file should have a header row with these columns:
+               </p>
+               <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
+                 <li><strong>Part Number</strong> (or Product ID, SKU, Item #)</li>
+                 <li><strong>Description</strong> (or Name, Title)</li>
+                 <li><strong>Quantity</strong> (total items, not cases)</li>
+                 <li><strong>Cost</strong> (price per item)</li>
+               </ul>
+               <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
+                 Example: Part Number,Description,Quantity,Cost<br/>
+                 GM123,"Red Peony",24,5.50
+               </p>
+               <p style={{ margin: '8px 0 0 0' }}>
+                 You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
+               </p>
+             </div>
+           )}
+
+           {/* Shoot List Format Guide - only show for shoot lists */}
+           {!isInvoice && (
+             <div className="shootlist-format-guide" style={{
+               background: '#f0f7ff',
+               border: '1px solid #b3d9ff',
+               padding: '12px 16px',
+               marginTop: '12px',
+               borderRadius: '4px',
+               fontSize: '13px',
+               color: '#0c4a8a'
+             }}>
+               <strong>📋 Shoot List Format (Product Totals):</strong>
+               <p style={{ margin: '8px 0 4px 0' }}>
+                 Your file should contain a "Product Totals" section with this layout:
+               </p>
+               <div style={{ 
+                 background: 'white', 
+                 border: '1px solid #b3d9ff',
+                 padding: '8px 12px', 
+                 margin: '8px 0',
+                 borderRadius: '3px',
+                 fontFamily: 'monospace',
+                 fontSize: '11px',
+                 overflowX: 'auto'
+               }}>
+                 <div><strong>Product Totals</strong></div>
+                 <div>Part Number | Description | Quantity</div>
+                 <div>CM202A | Chrysanthemum Shell | 24</div>
+                 <div>PFX30 | Palm Cake | 12</div>
+               </div>
+               <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
+                 <li>Section header: <strong>"Product Totals"</strong> (exact text)</li>
+                 <li>Column separators: <strong>| (pipe)</strong> or <strong>tabs</strong></li>
+                 <li>Required columns: Part Number | Description | Quantity</li>
+                 <li>Quantity = total items used in show</li>
+               </ul>
+               <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#0c5aa6' }}>
+                 💡 Exported from Finale 3D or copied from your show notes
+               </p>
+             </div>
+           )}
         </>
       ) : (
         <div className="preview-panel">
