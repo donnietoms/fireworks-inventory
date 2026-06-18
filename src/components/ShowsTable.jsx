@@ -46,7 +46,8 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
 
   return (
     <div className="shows-table-container">
-      <table className="shows-table">
+      <div className="table-wrapper">
+        <table className="shows-table">
           <thead>
            <tr>
              <th>Show Name</th>
@@ -76,11 +77,11 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
                   </button>
                 </td>
                   <td>{formatShowDate(show.date)}</td>
-                 <td>{totalItems}</td>
-                 <td style={{ color: notInInventory > 0 ? '#ff6b35' : '#666' }}>
+                 <td className="amount">{totalItems}</td>
+                 <td className="amount" style={{ color: notInInventory > 0 ? '#ff6b35' : '#666' }}>
                    {notInInventory}
                  </td>
-                 <td>{formatCurrency(show.totalValue)}</td>
+                 <td className="amount total">{formatCurrency(show.totalValue)}</td>
                 <td>
                  <button
                    className="btn-view"
@@ -121,9 +122,10 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
                 </td>
              </tr>
              );
-           })}
-        </tbody>
-      </table>
+            })}
+         </tbody>
+       </table>
+      </div>
     </div>
   );
 }
