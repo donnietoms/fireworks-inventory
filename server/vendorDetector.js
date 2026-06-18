@@ -36,6 +36,14 @@ export async function detectVendor(pdfPath) {
       return 'americanwholesale';
     }
     
+    // Check for Fireworks Forever
+    if (text.includes('fireworks forever') ||
+        text.includes('fireworksforever.com') ||
+        text.includes('2174 hwy 8') ||
+        text.includes('saint croix falls, wi 54024')) {
+      return 'fireworksforever';
+    }
+    
     // Add more vendors here
     // if (text.includes('other vendor name')) {
     //   return 'other-vendor';
@@ -65,6 +73,11 @@ export function getSupportedVendors() {
     {
       id: 'americanwholesale',
       name: 'American Wholesale Fireworks',
+      formats: ['pdf']
+    },
+    {
+      id: 'fireworksforever',
+      name: 'Fireworks Forever',
       formats: ['pdf']
     }
     // Add more vendors as they're implemented

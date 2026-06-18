@@ -109,16 +109,15 @@ function InventoryApp({ user }) {
     // Get order number
     const orderNumber = orderInfo?.orderNumber || fileName;
     
-    // Get order date from parser, or ask user if not available
+    // Get order date from parser (should already be provided from FileUpload component)
     let orderDate = orderInfo?.orderDate;
     if (!orderDate) {
-      const userDate = window.prompt('Order date not found in invoice. Please enter the order date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-      if (!userDate) {
-        return { warnings: [{ error: 'Upload cancelled - order date required' }] };
-      }
-      orderDate = userDate;
-    } else {
-      orderDate = new Date(orderDate).toISOString();
+      return { warnings: [{ error: 'Order date is required' }] };
+    }
+    
+    // Ensure orderDate is in YYYY-MM-DD format
+    if (orderDate && !orderDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+      return { warnings: [{ error: 'Invalid order date format' }] };
     }
     
     // Check if order already exists
@@ -155,12 +154,12 @@ function InventoryApp({ user }) {
       addOrder({
         vendor: orderInfo.vendor || 'Unknown',
         orderNumber: orderNumber,
+        orderDate: orderDate,  // Add orderDate as a separate field
         subtotal: orderInfo.subtotal || 0,
         discount: orderInfo.discount || 0,
         total: orderInfo.total || 0,
         invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
-        originalFileName: fileName,
-        createdAt: orderDate
+        originalFileName: fileName
       });
     }
     

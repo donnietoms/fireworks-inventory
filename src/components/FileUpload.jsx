@@ -5,6 +5,19 @@ import { useVendors } from '../hooks/useVendors';
 import { API_BASE_URL } from '../config';
 import './FileUpload.css';
 
+// Map vendor IDs to display names
+const VENDOR_DISPLAY_NAMES = {
+  'wisley': 'Wisley Pyrotechnics',
+  'spiritof76': 'Spirit of 76',
+  'americanwholesale': 'American Wholesale Fireworks',
+  'fireworksforever': 'Fireworks Forever'
+};
+
+// Helper function to get vendor display name
+const getVendorName = (vendorId) => {
+  return VENDOR_DISPLAY_NAMES[vendorId] || vendorId || 'Unknown';
+};
+
 const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -20,8 +33,10 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
   const [genericVendor, setGenericVendor] = useState('');
   const [genericOrderDate, setGenericOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [partNumberEdits, setPartNumberEdits] = useState({}); // Store part number edits for show list items: { originalPartNumber: newPartNumber }
+  const [partNumberSearches, setPartNumberSearches] = useState({}); // Track search input for each dropdown: { originalPartNumber: searchTerm }
   const [showName, setShowName] = useState(''); // For shoot list uploads
   const [showDate, setShowDate] = useState(new Date().toISOString().split('T')[0]); // For shoot list uploads
+  const [invoiceOrderDate, setInvoiceOrderDate] = useState(''); // For invoice uploads that need order date
   const fileInputRef = useRef(null);
   const { vendors } = useVendors();
 
@@ -121,7 +136,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         items: result.items,
         headers: result.headers || ['Part Number', 'Description', 'Quantity', 'Cost'],
         columnMap: result.columnMap || {},
-        vendor: result.vendor || result.detectedVendor || 'Unknown',
+        vendor: getVendorName(result.vendor || result.detectedVendor) || 'Unknown',
         detectedVendor: result.detectedVendor,
         orderInfo: result.orderInfo || null,
         showInfo: result.showInfo || null, // For shoot lists
@@ -131,6 +146,15 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       });
       setColumnMapping(result.columnMap || {});
       setPreviewVendor(result.vendor || result.detectedVendor);
+      
+      // Pre-fill order date if parser found one
+      if (isInvoice && result.orderInfo?.orderDate) {
+        // Convert YYYY-MM-DD to MM/DD/YYYY for display
+        const [year, month, day] = result.orderInfo.orderDate.split('-');
+        setInvoiceOrderDate(`${month}/${day}/${year}`);
+      } else {
+        setInvoiceOrderDate('');
+      }
       
       // Check if this is a generic import (CSV/Excel without vendor info)
       const fileName = file.name.toLowerCase();
@@ -181,6 +205,12 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
           alert('Please enter a vendor name');
           return;
         }
+      }
+      
+      // For invoices, validate the date field (PDF only, not generic imports)
+      if (isInvoice && !isGenericImport && !invoiceOrderDate.trim()) {
+        alert('Please enter the order date (MM/DD/YYYY)');
+        return;
       }
       
       // For shoot lists, validate show date
@@ -242,29 +272,39 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
           total: totalValue
         };
       } else if (isInvoice && preview.orderInfo) {
+        // Parse MM/DD/YYYY to YYYY-MM-DD if invoiceOrderDate is provided, otherwise use parser date
+        let orderDate = invoiceOrderDate ? null : preview.orderInfo.orderDate;
+        if (invoiceOrderDate) {
+          const dateParts = invoiceOrderDate.split('/');
+          if (dateParts.length === 3) {
+            const [month, day, year] = dateParts;
+            orderDate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+        }
         orderInfo = {
           vendor: preview.vendor,
           orderNumber: preview.orderInfo.orderNumber,
+          orderDate: orderDate,
           subtotal: preview.orderInfo.subtotal,
           discount: preview.orderInfo.discount,
           total: preview.orderInfo.total,
           savedFileName: preview.savedFileName
         };
       }
-      
-      // Pass show info if it's a shoot list upload
-      let finalShowInfo = null;
-      if (!isInvoice) {
-        // Create or update show info with user-provided date and optional name
-        finalShowInfo = {
-          ...(preview.showInfo || {}),
-          date: showDate,
-          name: showName || preview.showInfo?.name || null,
-          location: preview.showInfo?.location || null
-        };
-      }
-      
-      const warnings = onUpload(updatedItems, preview.fileName, isInvoice ? orderInfo : finalShowInfo);
+       
+       // Pass show info if it's a shoot list upload
+       let finalShowInfo = null;
+       if (!isInvoice) {
+         // Create or update show info with user-provided date and optional name
+         finalShowInfo = {
+           ...(preview.showInfo || {}),
+           date: showDate,
+           name: showName || preview.showInfo?.name || null,
+           location: preview.showInfo?.location || null
+         };
+       }
+       
+       const warnings = onUpload(updatedItems, preview.fileName, isInvoice ? orderInfo : finalShowInfo);
       
       if (warnings && warnings.length > 0) {
         const warningMessages = warnings.map(w => 
@@ -274,12 +314,14 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         ).join('\n');
         alert(`Warnings:\n${warningMessages}`);
       }
-      
-      setPreview(null);
-      setPreviewVendor(null);
-      setPackingEdits({});
-      setPartNumberEdits({});
-    }
+       
+       setPreview(null);
+       setPreviewVendor(null);
+       setPackingEdits({});
+       setPartNumberEdits({});
+       setPartNumberSearches({});
+       setInvoiceOrderDate('');
+     }
   };
 
   const handleCancel = () => {
@@ -287,10 +329,12 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     setPreviewVendor(null);
     setPackingEdits({});
     setPartNumberEdits({});
+    setPartNumberSearches({});
     setIsGenericImport(false);
     setGenericOrderNumber('');
     setGenericVendor('');
     setGenericOrderDate(new Date().toISOString().split('T')[0]);
+    setInvoiceOrderDate('');
     setShowName('');
     setShowDate(new Date().toISOString().split('T')[0]);
     if (fileInputRef.current) {
@@ -310,6 +354,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
       setPreviewVendor(null);
       setPackingEdits({});
       setPartNumberEdits({});
+      setPartNumberSearches({});
       setShowName('');
       setShowDate(new Date().toISOString().split('T')[0]);
       await processFile(preview.originalFile, newVendor);
@@ -444,37 +489,64 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
               </>
             )}
           </div>
-          
-           {/* CSV Import Format Note - only show for invoices */}
-           {isInvoice && (
-             <div className="csv-import-note" style={{
-               background: '#f8f9fa',
-               border: '1px solid #dee2e6',
-               padding: '12px 16px',
-               marginTop: '12px',
-               borderRadius: '4px',
-               fontSize: '13px',
-               color: '#495057'
-             }}>
-               <strong>📋 CSV Import Format:</strong>
-               <p style={{ margin: '8px 0 4px 0' }}>
-                 For generic CSV/Excel files, your file should have a header row with these columns:
-               </p>
-               <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
-                 <li><strong>Part Number</strong> (or Product ID, SKU, Item #)</li>
-                 <li><strong>Description</strong> (or Name, Title)</li>
-                 <li><strong>Quantity</strong> (total items, not cases)</li>
-                 <li><strong>Cost</strong> (price per item)</li>
-               </ul>
-               <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
-                 Example: Part Number,Description,Quantity,Cost<br/>
-                 GM123,"Red Peony",24,5.50
-               </p>
-               <p style={{ margin: '8px 0 0 0' }}>
-                 You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
-               </p>
-             </div>
-           )}
+           
+            {/* PDF Invoice Vendor Support - only show for invoices */}
+            {isInvoice && (
+              <div className="vendor-support-note" style={{
+                background: '#e8f5e9',
+                border: '1px solid #81c784',
+                padding: '12px 16px',
+                marginTop: '12px',
+                borderRadius: '4px',
+                fontSize: '13px',
+                color: '#2e7d32'
+              }}>
+                <strong>📄 PDF Invoice Auto-Import:</strong>
+                <p style={{ margin: '8px 0 4px 0' }}>
+                  We currently support automatic PDF invoice parsing for these vendors:
+                </p>
+                <ul style={{ margin: '4px 0 8px 20px', paddingLeft: '0' }}>
+                  <li>Wisley Pyrotechnics</li>
+                  <li>Spirit of 76</li>
+                  <li>American Wholesale Fireworks</li>
+                  <li>Fireworks Forever</li>
+                </ul>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
+                  For other vendors, please send a sample invoice to the dev team so we can add support.
+                </p>
+              </div>
+            )}
+
+            {/* CSV Import Format Note - only show for invoices */}
+            {isInvoice && (
+              <div className="csv-import-note" style={{
+                background: '#f8f9fa',
+                border: '1px solid #dee2e6',
+                padding: '12px 16px',
+                marginTop: '12px',
+                borderRadius: '4px',
+                fontSize: '13px',
+                color: '#495057'
+              }}>
+                <strong>📋 CSV Import Format:</strong>
+                <p style={{ margin: '8px 0 4px 0' }}>
+                  For generic CSV/Excel files, your file should have a header row with these columns:
+                </p>
+                <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
+                  <li><strong>Part Number</strong> (or Product ID, SKU, Item #)</li>
+                  <li><strong>Description</strong> (or Name, Title)</li>
+                  <li><strong>Quantity</strong> (total items, not cases)</li>
+                  <li><strong>Cost</strong> (price per item)</li>
+                </ul>
+                <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
+                  Example: Part Number,Description,Quantity,Cost<br/>
+                  GM123,"Red Peony",24,5.50
+                </p>
+                <p style={{ margin: '8px 0 0 0' }}>
+                  You'll be prompted to enter Order Number, Vendor, and Order Date after upload.
+                </p>
+              </div>
+            )}
 
            {/* Shoot List Format Guide - PDF */}
            {!isInvoice && (
@@ -549,33 +621,53 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
         </>
       ) : (
         <div className="preview-panel">
-          {/* Vendor Confirmation for Invoices */}
-          {isInvoice && preview.detectedVendor && (
-            <div className="vendor-confirmation">
-              <label htmlFor="preview-vendor-select">
-                Detected Vendor:
-              </label>
-              <select 
-                id="preview-vendor-select"
-                value={previewVendor || preview.vendor} 
-                onChange={(e) => handleVendorChange(e.target.value)}
-              >
-                {vendors.map(vendor => (
-                  <option key={vendor.id} value={vendor.id}>
-                    {vendor.name}
-                  </option>
-                ))}
-              </select>
-              <span className="vendor-hint">
-                {preview.detectedVendor === (previewVendor || preview.vendor) 
-                  ? '✓ Auto-detected' 
-                  : '⚠ Changed from auto-detect'}
-              </span>
-            </div>
-          )}
-          
-          {/* Generic Import Order Info Input */}
-          {isGenericImport && (
+           {/* Vendor Confirmation for Invoices */}
+           {isInvoice && preview.detectedVendor && (
+             <div className="vendor-confirmation">
+               <label htmlFor="preview-vendor-select">
+                 Detected Vendor:
+               </label>
+               <select 
+                 id="preview-vendor-select"
+                 value={previewVendor || preview.vendor} 
+                 onChange={(e) => handleVendorChange(e.target.value)}
+               >
+                 {vendors.map(vendor => (
+                   <option key={vendor.id} value={vendor.id}>
+                     {vendor.name}
+                   </option>
+                 ))}
+               </select>
+               <span className="vendor-hint">
+                 {preview.detectedVendor === (previewVendor || preview.vendor) 
+                   ? '✓ Auto-detected' 
+                   : '⚠ Changed from auto-detect'}
+               </span>
+             </div>
+           )}
+
+            {/* Order Date Input for Invoices (PDF only, not generic imports) */}
+            {isInvoice && !isGenericImport && (
+              <div className="generic-order-info">
+                <h4>Order Date (Required)</h4>
+                <div className="order-info-grid">
+                  <div className="form-group">
+                    <label htmlFor="invoice-order-date">Order Date *</label>
+                    <input
+                      id="invoice-order-date"
+                      type="text"
+                      value={invoiceOrderDate}
+                      onChange={(e) => setInvoiceOrderDate(e.target.value)}
+                      placeholder="MM/DD/YYYY"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+           
+           {/* Generic Import Order Info Input */}
+           {isGenericImport && (
             <div className="generic-order-info">
               <h4>Order Information (Required)</h4>
               <div className="order-info-grid">
@@ -806,36 +898,147 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                        ) : (
                          <>
                            <td>{item.size}</td>
-                           <td>
-                             {hasInventory ? (
-                               item.partNumber
-                             ) : (
-                               <select 
-                                 value={partNumberEdits[item.partNumber] || item.partNumber}
-                                 onChange={(e) => setPartNumberEdits({
-                                   ...partNumberEdits,
-                                   [item.partNumber]: e.target.value
-                                 })}
-                                 style={{
-                                   padding: '4px 8px',
-                                   border: '1px solid #ff9800',
-                                   borderRadius: '4px',
-                                   backgroundColor: '#fff3cd',
-                                   fontSize: '14px',
-                                   cursor: 'pointer'
-                                 }}
-                               >
-                                 <option value={item.partNumber}>{item.partNumber} (not in inventory)</option>
-                                 <optgroup label="Available in Inventory">
-                                   {Array.from(new Set(inventory.map(inv => inv.partNumber))).sort().map(partNum => (
-                                     <option key={partNum} value={partNum}>
-                                       {partNum}
-                                     </option>
-                                   ))}
-                                 </optgroup>
-                               </select>
-                             )}
-                           </td>
+                             <td>
+                               {hasInventory ? (
+                                 item.partNumber
+                               ) : (
+                                 <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                                   <button
+                                     onClick={() => setPartNumberSearches({
+                                       ...partNumberSearches,
+                                       [item.partNumber]: partNumberSearches[item.partNumber] === undefined ? '' : undefined
+                                     })}
+                                     style={{
+                                       width: '100%',
+                                       padding: '4px 8px',
+                                       border: '1px solid #ff9800',
+                                       borderRadius: '4px',
+                                       backgroundColor: '#fff3cd',
+                                       fontSize: '14px',
+                                       cursor: 'pointer',
+                                       textAlign: 'left',
+                                       display: 'flex',
+                                       justifyContent: 'space-between',
+                                       alignItems: 'center'
+                                     }}
+                                   >
+                                     <span>{partNumberEdits[item.partNumber] || item.partNumber}</span>
+                                     <span>▼</span>
+                                   </button>
+                                   {partNumberSearches[item.partNumber] !== undefined && (
+                                     <div style={{
+                                       position: 'absolute',
+                                       top: '100%',
+                                       left: 0,
+                                       right: 0,
+                                       backgroundColor: '#fff',
+                                       border: '1px solid #ff9800',
+                                       borderTop: 'none',
+                                       borderRadius: '0 0 4px 4px',
+                                       boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                                       zIndex: 10,
+                                       minWidth: '200px'
+                                     }}>
+                                       {/* Search input at top */}
+                                       <input
+                                         type="text"
+                                         placeholder="Search..."
+                                         value={partNumberSearches[item.partNumber]}
+                                         onChange={(e) => setPartNumberSearches({
+                                           ...partNumberSearches,
+                                           [item.partNumber]: e.target.value
+                                         })}
+                                         onClick={(e) => e.stopPropagation()}
+                                         autoFocus
+                                         style={{
+                                           width: '100%',
+                                           padding: '8px',
+                                           border: 'none',
+                                           borderBottom: '1px solid #f0f0f0',
+                                           fontSize: '13px',
+                                           boxSizing: 'border-box',
+                                           backgroundColor: '#f9f9f9'
+                                         }}
+                                       />
+                                       {/* Dropdown list */}
+                                       <div style={{
+                                         maxHeight: '250px',
+                                         overflowY: 'auto'
+                                       }}>
+                                         {/* Original item (not in inventory) option */}
+                                         <div
+                                           onClick={() => {
+                                             setPartNumberEdits(prev => {
+                                               const updated = { ...prev };
+                                               delete updated[item.partNumber];
+                                               return updated;
+                                             });
+                                             setPartNumberSearches({
+                                               ...partNumberSearches,
+                                               [item.partNumber]: undefined
+                                             });
+                                           }}
+                                           style={{
+                                             padding: '8px 12px',
+                                             cursor: 'pointer',
+                                             backgroundColor: !partNumberEdits[item.partNumber] || partNumberEdits[item.partNumber] === item.partNumber ? '#e3f2fd' : '#fff',
+                                             borderBottom: '1px solid #f0f0f0',
+                                             fontSize: '13px'
+                                           }}
+                                           onMouseOver={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                           onMouseOut={(e) => e.target.style.backgroundColor = !partNumberEdits[item.partNumber] || partNumberEdits[item.partNumber] === item.partNumber ? '#e3f2fd' : '#fff'}
+                                         >
+                                           {item.partNumber} (not in inventory)
+                                         </div>
+                                         {/* Divider */}
+                                         <div style={{ borderBottom: '2px solid #eee' }} />
+                                         {/* Filtered inventory options */}
+                                         {Array.from(new Set(inventory.map(inv => inv.partNumber)))
+                                           .sort()
+                                           .filter(partNum => 
+                                             partNum.toLowerCase().includes(partNumberSearches[item.partNumber].toLowerCase())
+                                           )
+                                           .map(partNum => (
+                                             <div
+                                               key={partNum}
+                                               onClick={() => {
+                                                 setPartNumberEdits({
+                                                   ...partNumberEdits,
+                                                   [item.partNumber]: partNum
+                                                 });
+                                                 setPartNumberSearches({
+                                                   ...partNumberSearches,
+                                                   [item.partNumber]: undefined
+                                                 });
+                                               }}
+                                               style={{
+                                                 padding: '8px 12px',
+                                                 cursor: 'pointer',
+                                                 backgroundColor: partNumberEdits[item.partNumber] === partNum ? '#e3f2fd' : '#fff',
+                                                 borderBottom: '1px solid #f0f0f0',
+                                                 fontSize: '13px'
+                                               }}
+                                               onMouseOver={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                               onMouseOut={(e) => e.target.style.backgroundColor = partNumberEdits[item.partNumber] === partNum ? '#e3f2fd' : '#fff'}
+                                             >
+                                               {partNum}
+                                             </div>
+                                           ))
+                                         }
+                                         {Array.from(new Set(inventory.map(inv => inv.partNumber)))
+                                           .filter(partNum => 
+                                             partNum.toLowerCase().includes(partNumberSearches[item.partNumber].toLowerCase())
+                                           ).length === 0 && (
+                                           <div style={{ padding: '12px', color: '#999', textAlign: 'center', fontSize: '13px' }}>
+                                             No matching part numbers
+                                           </div>
+                                         )}
+                                       </div>
+                                     </div>
+                                   )}
+                                 </div>
+                               )}
+                             </td>
                            <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                              {item.description}
                            </td>

@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../config';
 import './OrdersTable.css';
 
 const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) => {
-  const [sortField, setSortField] = useState('createdAt');
+  const [sortField, setSortField] = useState('orderDate');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filter, setFilter] = useState('');
 
@@ -58,13 +58,12 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
@@ -111,8 +110,8 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
         <table className="orders-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('createdAt')}>
-                Date <SortIcon field="createdAt" />
+              <th onClick={() => handleSort('orderDate')}>
+                Order Date <SortIcon field="orderDate" />
               </th>
               <th onClick={() => handleSort('vendor')}>
                 Vendor <SortIcon field="vendor" />
@@ -142,7 +141,7 @@ const OrdersTable = ({ orders, onUpdate, onDelete, onEdit, onViewInventory }) =>
             ) : (
               displayedOrders.map(order => (
                 <tr key={order.id}>
-                  <td>{formatDate(order.createdAt)}</td>
+                   <td>{formatDate(order.orderDate)}</td>
                   <td>{order.vendor}</td>
                   <td>{order.orderNumber}</td>
                   <td className="amount">${order.subtotal.toFixed(2)}</td>
