@@ -63,7 +63,8 @@ function InventoryApp() {
     addShow,
     updateShow,
     deleteShow,
-    clearShows
+    clearShows,
+    resyncShowCosts
   } = useShows();
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -420,6 +421,22 @@ function InventoryApp() {
     setShowManualShowModal(true);
   };
 
+  const handleResyncShow = async (showId) => {
+    setOperationLoading(true);
+    setOperationError(null);
+    
+    try {
+      const result = await resyncShowCosts(showId, inventory);
+      alert(`Show costs resynced successfully! New total: $${result.totalValue.toFixed(2)}`);
+    } catch (error) {
+      console.error('Error resyncing show:', error);
+      setOperationError(error.message || 'Failed to resync show costs');
+      alert(`Error: ${error.message || 'Failed to resync show costs'}`);
+    } finally {
+      setOperationLoading(false);
+    }
+  };
+
   const handleViewShowDetails = (showId) => {
     setSelectedShowId(showId);
     setActiveTab('show-details');
@@ -581,6 +598,7 @@ function InventoryApp() {
               onDeleteShow={handleDeleteShow}
               onViewDetails={handleViewShowDetails}
               onEdit={handleEditShow}
+              onResync={handleResyncShow}
             />
           </>
         )}

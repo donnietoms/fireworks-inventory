@@ -204,6 +204,101 @@ export const useShows = () => {
     }
   }, [user]);
 
+  // Resync show costs from current inventory using FIFO
+  const resyncShowCosts = useCallback(async (showId, inventory) => {
+    if (!user) {
+      throw new Error('User must be logged in to resync shows');
+    }
+
+    try {
+      // Get the show and its items
+      const { data: show, error: showError } = await supabase
+        .from('shows')
+        .select(`
+          *,
+          items:show_items(*)
+        `)
+        .eq('id', showId)
+        .single();
+
+      if (showError) throw showError;
+
+      // Calculate FIFO costs for each show item based on current inventory
+      const updatedItems = show.items.map(showItem => {
+        // Find matching inventory items sorted by order date (FIFO)
+        const matchingInventory = inventory
+          .filter(invItem => invItem.partNumber?.toLowerCase() === showItem.part_number?.toLowerCase())
+          .sort((a, b) => {
+            const dateA = new Date(a.orderDate || 0).getTime();
+            const dateB = new Date(b.orderDate || 0).getTime();
+            return dateA - dateB; // Oldest first
+          });
+
+        if (matchingInventory.length === 0) {
+          // Not in inventory - keep existing cost (likely 0)
+          return {
+            ...showItem,
+            in_inventory: false
+          };
+        }
+
+        // Calculate FIFO cost by taking from oldest inventory first
+        let remainingQty = showItem.quantity;
+        let totalCost = 0;
+        
+        for (const invItem of matchingInventory) {
+          if (remainingQty <= 0) break;
+          
+          const qtyToTake = Math.min(invItem.quantity, remainingQty);
+          totalCost += qtyToTake * invItem.cost;
+          remainingQty -= qtyToTake;
+        }
+
+        const averageCost = showItem.quantity > 0 ? totalCost / showItem.quantity : 0;
+
+        return {
+          ...showItem,
+          cost: averageCost,
+          line_total: showItem.quantity * averageCost,
+          in_inventory: true
+        };
+      });
+
+      // Update all show items with new costs
+      for (const item of updatedItems) {
+        const { error: updateError } = await supabase
+          .from('show_items')
+          .update({
+            cost: item.cost,
+            line_total: item.line_total,
+            in_inventory: item.in_inventory
+          })
+          .eq('id', item.id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Recalculate total value
+      const totalValue = updatedItems.reduce((sum, item) => sum + item.line_total, 0);
+
+      // Update show total
+      const { error: updateShowError } = await supabase
+        .from('shows')
+        .update({ total_value: totalValue })
+        .eq('id', showId);
+
+      if (updateShowError) throw updateShowError;
+
+      // Refresh shows
+      await fetchShows();
+
+      return { success: true, totalValue };
+    } catch (error) {
+      console.error('Error resyncing show costs:', error);
+      throw error;
+    }
+  }, [user, fetchShows]);
+
   return {
     shows,
     loading,
@@ -211,6 +306,7 @@ export const useShows = () => {
     updateShow,
     deleteShow,
     clearShows,
+    resyncShowCosts,
     refetch: fetchShows
   };
 };

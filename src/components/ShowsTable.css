@@ -45,6 +45,8 @@
 }
 
 .shows-table .btn-view,
+.shows-table .btn-resync,
+.shows-table .btn-edit,
 .shows-table .btn-delete {
   background: none;
   border: none;
@@ -54,10 +56,9 @@
   margin: 0 4px;
 }
 
-.shows-table .btn-view:hover {
-  opacity: 0.7;
-}
-
+.shows-table .btn-view:hover,
+.shows-table .btn-resync:hover,
+.shows-table .btn-edit:hover,
 .shows-table .btn-delete:hover {
   opacity: 0.7;
 }

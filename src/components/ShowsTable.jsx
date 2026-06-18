@@ -1,7 +1,7 @@
 import React from 'react';
 import './ShowsTable.css';
 
-function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
+function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
   if (shows.length === 0) {
     return (
       <div className="empty-state">
@@ -78,33 +78,44 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
                   {notInInventory}
                 </td>
                 <td>{formatCurrency(show.totalValue)}</td>
-               <td>
-                <button
-                  className="btn-view"
-                  onClick={() => onViewDetails(show.id)}
-                  title="View Details"
-                >
-                  📋
-                </button>
-                <button
-                  className="btn-edit"
-                  onClick={() => onEdit(show)}
-                  title="Edit Show"
-                >
-                  ✏️
-                </button>
-                <button
-                  className="btn-delete"
-                  onClick={() => {
-                    if (window.confirm(`Delete show "${show.name}"? This will return all used items back to inventory.`)) {
-                      onDeleteShow(show.id);
-                    }
-                  }}
-                  title="Delete Show"
-                >
-                  🗑️
-                </button>
-               </td>
+                <td>
+                 <button
+                   className="btn-view"
+                   onClick={() => onViewDetails(show.id)}
+                   title="View Details"
+                 >
+                   📋
+                 </button>
+                 <button
+                   className="btn-resync"
+                   onClick={() => {
+                     if (window.confirm(`Resync costs for "${show.name}" from current inventory using FIFO?`)) {
+                       onResync(show.id);
+                     }
+                   }}
+                   title="Resync Costs from Inventory"
+                 >
+                   🔄
+                 </button>
+                 <button
+                   className="btn-edit"
+                   onClick={() => onEdit(show)}
+                   title="Edit Show"
+                 >
+                   ✏️
+                 </button>
+                 <button
+                   className="btn-delete"
+                   onClick={() => {
+                     if (window.confirm(`Delete show "${show.name}"? This will return all used items back to inventory.`)) {
+                       onDeleteShow(show.id);
+                     }
+                   }}
+                   title="Delete Show"
+                 >
+                   🗑️
+                 </button>
+                </td>
              </tr>
              );
            })}
