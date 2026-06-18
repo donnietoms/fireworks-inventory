@@ -59,6 +59,14 @@ export const useInventory = () => {
           packingFormat = String(newItem.packing);
         }
         
+        // Debug logging
+        console.log('Saving inventory item:', {
+          partNumber: newItem.partNumber,
+          cases: newItem.cases,
+          packing: packingFormat,
+          quantity: newItem.quantity
+        });
+        
         return {
           user_id: user.id,
           order_id: newItem.orderId, // This should be set from the order creation
