@@ -105,15 +105,6 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="totals-row">
-              <td colSpan={orderNumber ? 1 : 2}><strong>TOTALS</strong></td>
-              <td><strong>{totalQuantity}</strong></td>
-              <td><strong>{formatCurrency(avgCost)}</strong></td>
-              <td><strong>{formatCurrency(totalValue)}</strong></td>
-              <td></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
 
