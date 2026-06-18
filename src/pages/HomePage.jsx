@@ -6,7 +6,6 @@ function HomePage() {
   const pricingPlans = [
     {
       name: 'Starter',
-      price: 7,
       features: [
         'Up to 500 inventory items',
         'Single user access',
@@ -20,7 +19,6 @@ function HomePage() {
     },
     {
       name: 'Advanced',
-      price: 15,
       features: [
         'Up to 1,500 inventory items',
         'Single user access',
@@ -34,7 +32,6 @@ function HomePage() {
     },
     {
       name: 'Professional',
-      price: 25,
       features: [
         'Unlimited inventory items',
         'Single user access',
@@ -151,11 +148,6 @@ function HomePage() {
               <div key={idx} className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
                 {plan.popular && <div className="popular-badge">Most Popular</div>}
                 <h3 className="plan-name">{plan.name}</h3>
-                <div className="plan-price">
-                  <span className="currency">$</span>
-                  <span className="amount">{plan.price}</span>
-                  <span className="period">/month</span>
-                </div>
                 <ul className="plan-features">
                   {plan.features.map((feature, i) => (
                     <li key={i}>✓ {feature}</li>
@@ -169,27 +161,6 @@ function HomePage() {
                 </Link>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="testimonials">
-        <div className="container">
-          <h2 className="section-title">Trusted by Professionals</h2>
-          <div className="testimonials-grid">
-            <div className="testimonial">
-              <p className="quote">"This app saved me countless hours during show prep. The FIFO tracking is exactly what I needed."</p>
-              <p className="author">— Mike Johnson, Licensed Pyrotechnician</p>
-            </div>
-            <div className="testimonial">
-              <p className="quote">"Finally, an inventory system built for our industry. The PDF parsing alone is worth it."</p>
-              <p className="author">— Sarah Chen, Display Company Owner</p>
-            </div>
-            <div className="testimonial">
-              <p className="quote">"Being able to export to Finale 3D streamlined our entire workflow. Highly recommend!"</p>
-              <p className="author">— David Martinez, Show Designer</p>
-            </div>
           </div>
         </div>
       </section>
