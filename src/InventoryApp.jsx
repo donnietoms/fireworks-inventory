@@ -20,6 +20,18 @@ import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './InventoryApp.css';
 
+const MESSAGES = {
+  ERROR: {
+    UPLOAD_FAILED: 'Upload failed. Please try again.',
+    DELETE_FAILED: 'Delete operation failed. Please try again.',
+    UPDATE_FAILED: 'Update operation failed. Please try again.',
+  },
+  SUCCESS: {
+    ORDER_DELETED: 'Order deleted successfully',
+    SHOW_DELETED: 'Show deleted successfully',
+  }
+};
+
 function InventoryApp() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -64,6 +76,8 @@ function InventoryApp() {
   const [selectedShowId, setSelectedShowId] = useState(null);
   const [selectedPartNumber, setSelectedPartNumber] = useState(null);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
+  const [operationLoading, setOperationLoading] = useState(false);
+  const [operationError, setOperationError] = useState(null);
 
   const handleExport = (format) => {
     if (inventory.length === 0) {
@@ -108,77 +122,100 @@ function InventoryApp() {
   };
 
   const handleInvoiceUpload = async (items, fileName, orderInfo) => {
-    // Get order number
-    const orderNumber = orderInfo?.orderNumber || fileName;
+    setOperationLoading(true);
+    setOperationError(null);
     
-    // Get order date from parser (should already be provided from FileUpload component)
-    let orderDate = orderInfo?.orderDate;
-    if (!orderDate) {
-      return { warnings: [{ error: 'Order date is required' }] };
-    }
-    
-    // Ensure orderDate is in YYYY-MM-DD format
-    if (orderDate && !orderDate.match(/^\d{4}-\d{2}-\d{2}/)) {
-      return { warnings: [{ error: 'Invalid order date format' }] };
-    }
-    
-    // Check if order already exists
-    const existingOrder = orders.find(o => o.orderNumber === orderNumber);
-    if (existingOrder) {
-      const choice = window.confirm(
-        `Order ${orderNumber} already exists!\n\n` +
-        `Click OK to DELETE the existing order and replace with new data.\n` +
-        `Click Cancel to keep the existing order and abort this upload.`
-      );
+    try {
+      // Get order number
+      const orderNumber = orderInfo?.orderNumber || fileName;
       
-      if (choice) {
-        // Delete existing order and its inventory
-        deleteOrder(existingOrder.id);
-        deleteItemsByOrder(orderNumber);
-        
-        // Delete the invoice file if it exists
-        if (existingOrder.invoiceFile) {
-          try {
-            await fetch(`${API_BASE_URL}/api/invoice/${existingOrder.invoiceFile}`, {
-              method: 'DELETE'
-            });
-          } catch (error) {
-            console.error('Failed to delete old invoice file:', error);
-          }
-        }
-      } else {
-        return { warnings: [{ error: 'Upload cancelled - duplicate order' }] };
+      // Get order date from parser (should already be provided from FileUpload component)
+      let orderDate = orderInfo?.orderDate;
+      if (!orderDate) {
+        return { warnings: [{ error: 'Order date is required' }] };
       }
+      
+      // Ensure orderDate is in YYYY-MM-DD format
+      if (orderDate && !orderDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+        return { warnings: [{ error: 'Invalid order date format' }] };
+      }
+      
+      // Check if order already exists
+      const existingOrder = orders.find(o => o.orderNumber === orderNumber);
+      if (existingOrder) {
+        const choice = window.confirm(
+          `Order ${orderNumber} already exists!\n\n` +
+          `Click OK to DELETE the existing order and replace with new data.\n` +
+          `Click Cancel to keep the existing order and abort this upload.`
+        );
+        
+        if (choice) {
+          // Delete existing order and its inventory
+          await deleteOrder(existingOrder.id);
+          await deleteItemsByOrder(orderNumber);
+          
+          // Delete the invoice file if it exists
+          if (existingOrder.invoiceFile) {
+            try {
+              await fetch(`${API_BASE_URL}/api/invoice/${existingOrder.invoiceFile}`, {
+                method: 'DELETE'
+              });
+            } catch (error) {
+              console.error('Failed to delete old invoice file:', error);
+            }
+          }
+        } else {
+          return { warnings: [{ error: 'Upload cancelled - duplicate order' }] };
+        }
+      }
+      
+      // Create order record if orderInfo provided
+      let createdOrder = null;
+      if (orderInfo) {
+        createdOrder = await addOrder({
+          vendor: orderInfo.vendor || 'Unknown',
+          orderNumber: orderNumber,
+          orderDate: orderDate,  // Add orderDate as a separate field
+          subtotal: orderInfo.subtotal || 0,
+          discount: orderInfo.discount || 0,
+          total: orderInfo.total || 0,
+          invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
+          originalFileName: fileName
+        });
+      }
+      
+      // Add items to inventory with order number, date, vendor, and order ID
+      const itemsWithOrderId = items.map(item => ({
+        ...item,
+        orderId: createdOrder?.id
+      }));
+      const result = await addFromInvoice(itemsWithOrderId, fileName, orderNumber, orderDate, orderInfo?.vendor || 'Unknown');
+      
+      return result;
+    } catch (error) {
+      console.error('Error uploading invoice:', error);
+      setOperationError(error.message || MESSAGES.ERROR.UPLOAD_FAILED);
+      return { warnings: [{ error: error.message || MESSAGES.ERROR.UPLOAD_FAILED }] };
+    } finally {
+      setOperationLoading(false);
     }
-    
-    // Create order record if orderInfo provided
-    if (orderInfo) {
-      addOrder({
-        vendor: orderInfo.vendor || 'Unknown',
-        orderNumber: orderNumber,
-        orderDate: orderDate,  // Add orderDate as a separate field
-        subtotal: orderInfo.subtotal || 0,
-        discount: orderInfo.discount || 0,
-        total: orderInfo.total || 0,
-        invoiceFile: orderInfo.savedFileName || null, // Store the saved filename
-        originalFileName: fileName
-      });
-    }
-    
-    // Add items to inventory with order number, date, and vendor
-    const result = addFromInvoice(items, fileName, orderNumber, orderDate, orderInfo?.vendor || 'Unknown');
-    
-    return result;
   };
 
   const handleDeleteOrder = async (orderId, orderNumber) => {
-    if (confirm(`Delete order ${orderNumber}?\n\nThis will also remove all inventory items from this order.`)) {
+    if (!confirm(`Delete order ${orderNumber}?\n\nThis will also remove all inventory items from this order.`)) {
+      return;
+    }
+    
+    setOperationLoading(true);
+    setOperationError(null);
+    
+    try {
       // Find the order to get invoice file info
       const order = orders.find(o => o.id === orderId);
       
       // Delete the order and inventory items
-      deleteOrder(orderId);
-      deleteItemsByOrder(orderNumber);
+      await deleteOrder(orderId);
+      await deleteItemsByOrder(orderNumber);
       
       // Delete the invoice file if it exists
       if (order?.invoiceFile) {
@@ -191,101 +228,150 @@ function InventoryApp() {
           // Don't fail the whole operation if file deletion fails
         }
       }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      setOperationError(error.message || MESSAGES.ERROR.DELETE_FAILED);
+      alert(`Error: ${error.message || MESSAGES.ERROR.DELETE_FAILED}`);
+    } finally {
+      setOperationLoading(false);
     }
   };
 
-  const handleShootListUpload = (items, fileName, showInfo) => {
-    const showName = showInfo?.name || fileName;
+  const handleShootListUpload = async (items, fileName, showInfo) => {
+    setOperationLoading(true);
+    setOperationError(null);
     
-    // Check if show already exists
-    const existingShow = shows.find(s => s.name === showName);
-    if (existingShow) {
-      const choice = window.confirm(
-        `Show "${showName}" already exists!\n\n` +
-        `Click OK to DELETE the existing show and replace with new data.\n` +
-        `Click Cancel to keep the existing show and abort this upload.\n\n` +
-        `Note: Deleting the show will NOT restore inventory (items remain marked as used).`
-      );
+    try {
+      const showName = showInfo?.name || fileName;
       
-      if (choice) {
-        // Delete existing show
-        deleteShow(existingShow.id);
-      } else {
-        return { warnings: [{ error: 'Upload cancelled - duplicate show' }] };
+      // Check if show already exists
+      const existingShow = shows.find(s => s.name === showName);
+      if (existingShow) {
+        const choice = window.confirm(
+          `Show "${showName}" already exists!\n\n` +
+          `Click OK to DELETE the existing show and replace with new data.\n` +
+          `Click Cancel to keep the existing show and abort this upload.\n\n` +
+          `Note: Deleting the show will NOT restore inventory (items remain marked as used).`
+        );
+        
+        if (choice) {
+          // Delete existing show
+          await deleteShow(existingShow.id);
+        } else {
+          return { warnings: [{ error: 'Upload cancelled - duplicate show' }] };
+        }
       }
-    }
-    
-    // Cross-reference items with inventory to get cost
-    const enrichedItems = items.map(item => {
-      // Find all matching inventory items by part number
-      const inventoryItems = inventory.filter(invItem => 
-        invItem.partNumber === item.partNumber
-      );
       
-      // Calculate weighted average cost from all matching inventory items
-      let totalCost = 0;
-      let totalQty = 0;
-      
-      inventoryItems.forEach(invItem => {
-        totalCost += invItem.cost * invItem.quantity;
-        totalQty += invItem.quantity;
+      // Cross-reference items with inventory to get cost
+      const enrichedItems = items.map(item => {
+        // Find all matching inventory items by part number
+        const inventoryItems = inventory.filter(invItem => 
+          invItem.partNumber === item.partNumber
+        );
+        
+        // Calculate weighted average cost from all matching inventory items
+        let totalCost = 0;
+        let totalQty = 0;
+        
+        inventoryItems.forEach(invItem => {
+          totalCost += invItem.cost * invItem.quantity;
+          totalQty += invItem.quantity;
+        });
+        
+        const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+        
+        return {
+          ...item,
+          cost: parseFloat(avgCost.toFixed(2)), // Weighted average cost
+          inInventory: inventoryItems.length > 0,
+          availableQuantity: totalQty
+        };
       });
       
-      const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+      // Create show record with enriched items
+      const showId = await addShow({
+        name: showName,
+        date: showInfo?.date || new Date().toISOString(),
+        location: showInfo?.location || '',
+        items: enrichedItems
+      });
       
-      return {
-        ...item,
-        cost: parseFloat(avgCost.toFixed(2)), // Weighted average cost
-        inInventory: inventoryItems.length > 0,
-        availableQuantity: totalQty
-      };
-    });
-    
-    // Create show record with enriched items
-    const showId = addShow({
-      name: showName,
-      date: showInfo?.date || new Date().toISOString(),
-      location: showInfo?.location || '',
-      items: enrichedItems
-    });
-    
-    // Subtract items from inventory
-    const result = subtractFromShootList(enrichedItems, fileName);
-    
-    // Switch to Current Inventory tab to see updated quantities
-    setActiveTab('current-inventory');
-    
-    return result;
+      // Subtract items from inventory
+      const result = await subtractFromShootList(enrichedItems, fileName);
+      
+      // Switch to Current Inventory tab to see updated quantities
+      setActiveTab('current-inventory');
+      
+      return result;
+    } catch (error) {
+      console.error('Error uploading shoot list:', error);
+      setOperationError(error.message || MESSAGES.ERROR.UPLOAD_FAILED);
+      return { warnings: [{ error: error.message || MESSAGES.ERROR.UPLOAD_FAILED }] };
+    } finally {
+      setOperationLoading(false);
+    }
   };
 
-  const handleDeleteShow = (showId) => {
-    if (confirm('Delete this show? Items will be returned to inventory.')) {
-      deleteShow(showId);
+  const handleDeleteShow = async (showId) => {
+    if (!confirm('Delete this show? Items will be returned to inventory.')) {
+      return;
+    }
+    
+    setOperationLoading(true);
+    setOperationError(null);
+    
+    try {
+      await deleteShow(showId);
       // Switch to Current Inventory tab to see updated quantities
       if (activeTab === 'shows' && !selectedShowId) {
         setActiveTab('current-inventory');
       }
+    } catch (error) {
+      console.error('Error deleting show:', error);
+      setOperationError(error.message || MESSAGES.ERROR.DELETE_FAILED);
+      alert(`Error: ${error.message || MESSAGES.ERROR.DELETE_FAILED}`);
+    } finally {
+      setOperationLoading(false);
     }
   };
 
-  const handleManualOrderEntry = ({ order, items }) => {
-    if (editingOrder) {
-      // Update existing order
-      updateOrder(editingOrder.id, order);
-      
-      // Delete old inventory items for this order
-      deleteItemsByOrder(editingOrder.orderNumber);
-      
-      // Add new inventory items
-      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
-      
-      setEditingOrder(null);
-    } else {
-      // Add new order
-      addOrder(order);
-      
-      // Add all items to inventory
-      addFromInvoice(items, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
+  const handleManualOrderEntry = async ({ order, items }) => {
+    setOperationLoading(true);
+    setOperationError(null);
+    
+    try {
+      if (editingOrder) {
+        // Update existing order
+        await updateOrder(editingOrder.id, order);
+        
+        // Delete old inventory items for this order
+        await deleteItemsByOrder(editingOrder.orderNumber);
+        
+        // Add new inventory items with order ID
+        const itemsWithOrderId = items.map(item => ({
+          ...item,
+          orderId: editingOrder.id
+        }));
+        await addFromInvoice(itemsWithOrderId, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
+        
+        setEditingOrder(null);
+      } else {
+        // Add new order
+        const createdOrder = await addOrder(order);
+        
+        // Add all items to inventory with order ID
+        const itemsWithOrderId = items.map(item => ({
+          ...item,
+          orderId: createdOrder.id
+        }));
+        await addFromInvoice(itemsWithOrderId, `Manual Order #${order.orderNumber}`, order.orderNumber, order.orderDate, order.vendor);
+      }
+    } catch (error) {
+      console.error('Error saving manual order:', error);
+      setOperationError(error.message || MESSAGES.ERROR.UPDATE_FAILED);
+      alert(`Error: ${error.message || MESSAGES.ERROR.UPDATE_FAILED}`);
+    } finally {
+      setOperationLoading(false);
     }
   };
 
@@ -300,22 +386,33 @@ function InventoryApp() {
     setShowManualOrderModal(true);
   };
 
-  const handleManualShowEntry = (showData) => {
-    if (editingShow) {
-      // Editing existing show - delete old one and add new
-      deleteShow(editingShow.id); // This will return items to inventory
-      addShow({ ...showData, id: editingShow.id }); // Keep same ID
-      subtractFromShootList(showData.items, null, { ...showData, id: editingShow.id });
-      setEditingShow(null);
+  const handleManualShowEntry = async (showData) => {
+    setOperationLoading(true);
+    setOperationError(null);
+    
+    try {
+      if (editingShow) {
+        // Editing existing show - delete old one and add new
+        await deleteShow(editingShow.id); // This will return items to inventory
+        await addShow({ ...showData, id: editingShow.id }); // Keep same ID
+        await subtractFromShootList(showData.items, null, { ...showData, id: editingShow.id });
+        setEditingShow(null);
+        setShowManualShowModal(false);
+        // Switch to Current Inventory to show updated quantities
+        setActiveTab('current-inventory');
+      } else {
+        // Creating new show
+        await addShow(showData);
+        await subtractFromShootList(showData.items, null, showData);
+      }
       setShowManualShowModal(false);
-      // Switch to Current Inventory to show updated quantities
-      setActiveTab('current-inventory');
-    } else {
-      // Creating new show
-      addShow(showData);
-      subtractFromShootList(showData.items, null, showData);
+    } catch (error) {
+      console.error('Error saving manual show:', error);
+      setOperationError(error.message || MESSAGES.ERROR.UPDATE_FAILED);
+      alert(`Error: ${error.message || MESSAGES.ERROR.UPDATE_FAILED}`);
+    } finally {
+      setOperationLoading(false);
     }
-    setShowManualShowModal(false);
   };
 
   const handleEditShow = (show) => {
@@ -408,6 +505,13 @@ function InventoryApp() {
       </nav>
 
       <main className="main-content">
+        {operationError && (
+          <div className="error-banner">
+            <strong>Error:</strong> {operationError}
+            <button onClick={() => setOperationError(null)} className="error-close">×</button>
+          </div>
+        )}
+        
         {activeTab === 'current-inventory' && (
           <CurrentInventory
             inventory={inventory}
@@ -495,6 +599,7 @@ function InventoryApp() {
                 type="invoice"
                 onUpload={handleInvoiceUpload}
                 inventory={inventory}
+                disabled={operationLoading}
               />
             </div>
             <div className="upload-column">
@@ -502,6 +607,7 @@ function InventoryApp() {
                 type="shootList"
                 onUpload={handleShootListUpload}
                 inventory={inventory}
+                disabled={operationLoading}
               />
             </div>
           </div>

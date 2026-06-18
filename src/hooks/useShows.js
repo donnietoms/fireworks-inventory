@@ -1,87 +1,208 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const STORAGE_KEY = 'fireworks-shows';
-
-// Load shows from localStorage
-export const loadShows = () => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error('Error loading shows:', error);
-    return [];
-  }
-};
-
-// Save shows to localStorage
-export const saveShows = (shows) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(shows));
-  } catch (error) {
-    console.error('Error saving shows:', error);
-  }
-};
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { mapShowFromDB } from '../utils/dbMappers';
 
 export const useShows = () => {
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Load shows on mount
+  // Load shows from Supabase on mount and when user changes
   useEffect(() => {
-    const data = loadShows();
-    setShows(data);
-    setLoading(false);
-  }, []);
-
-  // Save shows whenever they change
-  useEffect(() => {
-    if (!loading) {
-      saveShows(shows);
+    if (!user) {
+      setShows([]);
+      setLoading(false);
+      return;
     }
-  }, [shows, loading]);
+
+    fetchShows();
+  }, [user]);
+
+  const fetchShows = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch shows with their items
+      const { data: showsData, error: showsError } = await supabase
+        .from('shows')
+        .select(`
+          *,
+          items:show_items(*)
+        `)
+        .order('show_date', { ascending: false });
+
+      if (showsError) throw showsError;
+
+      const mappedShows = (showsData || []).map(mapShowFromDB);
+      setShows(mappedShows);
+    } catch (error) {
+      console.error('Error loading shows:', error);
+      setShows([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Add a new show
-  const addShow = useCallback((showData) => {
-    const newShow = {
-      id: `show-${Date.now()}`,
-      name: showData.name,
-      date: showData.date,
-      location: showData.location || '',
-      items: showData.items || [],
-      totalItems: showData.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-      totalValue: showData.items?.reduce((sum, item) => sum + ((item.quantity || 0) * (item.cost || 0)), 0) || 0,
-      createdAt: new Date().toISOString()
-    };
+  const addShow = useCallback(async (showData) => {
+    if (!user) {
+      throw new Error('User must be logged in to add shows');
+    }
 
-    setShows(prev => [...prev, newShow]);
-    return newShow.id;
-  }, []);
+    try {
+      // Calculate totals
+      const totalItems = showData.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+      const totalValue = showData.items?.reduce((sum, item) => sum + ((item.quantity || 0) * (item.cost || 0)), 0) || 0;
+
+      // Insert show
+      const { data: show, error: showError } = await supabase
+        .from('shows')
+        .insert([{
+          user_id: user.id,
+          show_name: showData.name,
+          show_date: showData.date,
+          location: showData.location || '',
+          total_value: totalValue
+        }])
+        .select()
+        .single();
+
+      if (showError) throw showError;
+
+      // Insert show items
+      if (showData.items && showData.items.length > 0) {
+        const showItems = showData.items.map(item => ({
+          user_id: user.id,
+          show_id: show.id,
+          part_number: item.partNumber,
+          description: item.description,
+          quantity: item.quantity,
+          cost: item.cost,
+          line_total: (item.quantity || 0) * (item.cost || 0),
+          in_inventory: item.inInventory !== undefined ? item.inInventory : true
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('show_items')
+          .insert(showItems);
+
+        if (itemsError) throw itemsError;
+      }
+
+      // Refresh shows to get the complete data
+      await fetchShows();
+
+      return show.id;
+    } catch (error) {
+      console.error('Error adding show:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Update a show
-  const updateShow = useCallback((id, updates) => {
-    setShows(prev => prev.map(show => {
-      if (show.id === id) {
-        const updatedShow = { ...show, ...updates };
-        // Recalculate totals if items changed
-        if (updates.items) {
-          updatedShow.totalItems = updates.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-          updatedShow.totalValue = updates.items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.cost || 0)), 0);
+  const updateShow = useCallback(async (id, updates) => {
+    if (!user) {
+      throw new Error('User must be logged in to update shows');
+    }
+
+    try {
+      const updateData = {};
+      if (updates.name !== undefined) updateData.show_name = updates.name;
+      if (updates.date !== undefined) updateData.show_date = updates.date;
+      if (updates.location !== undefined) updateData.location = updates.location;
+
+      // If items are being updated, recalculate total value
+      if (updates.items) {
+        const totalValue = updates.items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.cost || 0)), 0);
+        updateData.total_value = totalValue;
+
+        // Delete existing items and insert new ones
+        const { error: deleteError } = await supabase
+          .from('show_items')
+          .delete()
+          .eq('show_id', id);
+
+        if (deleteError) throw deleteError;
+
+        if (updates.items.length > 0) {
+          const showItems = updates.items.map(item => ({
+            user_id: user.id,
+            show_id: id,
+            part_number: item.partNumber,
+            description: item.description,
+            quantity: item.quantity,
+            cost: item.cost,
+            line_total: (item.quantity || 0) * (item.cost || 0),
+            in_inventory: item.inInventory !== undefined ? item.inInventory : true
+          }));
+
+          const { error: itemsError } = await supabase
+            .from('show_items')
+            .insert(showItems);
+
+          if (itemsError) throw itemsError;
         }
-        return updatedShow;
       }
-      return show;
-    }));
-  }, []);
+
+      // Update the show
+      const { error: updateError } = await supabase
+        .from('shows')
+        .update(updateData)
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      // Refresh shows
+      await fetchShows();
+    } catch (error) {
+      console.error('Error updating show:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Delete a show
-  const deleteShow = useCallback((id) => {
-    setShows(prev => prev.filter(show => show.id !== id));
-  }, []);
+  const deleteShow = useCallback(async (id) => {
+    if (!user) {
+      throw new Error('User must be logged in to delete shows');
+    }
+
+    try {
+      // Delete show (cascade will handle show_items)
+      const { error } = await supabase
+        .from('shows')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setShows(prev => prev.filter(show => show.id !== id));
+    } catch (error) {
+      console.error('Error deleting show:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Clear all shows
-  const clearShows = useCallback(() => {
-    setShows([]);
-  }, []);
+  const clearShows = useCallback(async () => {
+    if (!user) {
+      throw new Error('User must be logged in to clear shows');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('shows')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setShows([]);
+    } catch (error) {
+      console.error('Error clearing shows:', error);
+      throw error;
+    }
+  }, [user]);
 
   return {
     shows,
@@ -89,6 +210,7 @@ export const useShows = () => {
     addShow,
     updateShow,
     deleteShow,
-    clearShows
+    clearShows,
+    refetch: fetchShows
   };
 };

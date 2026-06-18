@@ -1,76 +1,104 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadInventory, saveInventory, addToHistory } from '../utils/storage';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { mapInventoryFromDB } from '../utils/dbMappers';
 
 export const useInventory = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Load inventory on mount
+  // Load inventory from Supabase on mount and when user changes
   useEffect(() => {
-    const data = loadInventory();
-    setInventory(data);
-    setLoading(false);
-  }, []);
-
-  // Save inventory whenever it changes
-  useEffect(() => {
-    if (!loading) {
-      saveInventory(inventory);
+    if (!user) {
+      setInventory([]);
+      setLoading(false);
+      return;
     }
-  }, [inventory, loading]);
+
+    fetchInventory();
+  }, [user]);
+
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('inventory')
+        .select('*')
+        .order('order_date', { ascending: true }); // FIFO ordering
+
+      if (error) throw error;
+
+      // Map database format to app format
+      const mappedInventory = (data || []).map(mapInventoryFromDB);
+      setInventory(mappedInventory);
+    } catch (error) {
+      console.error('Error loading inventory:', error);
+      setInventory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Add items from invoice (increases quantity)
-  const addFromInvoice = useCallback((items, invoiceName = 'Invoice', orderNumber = null, orderDate = null, vendor = null) => {
-    setInventory(prev => {
-      const updated = [...prev];
-      
-      items.forEach(newItem => {
-        // Instead of merging, always add as separate line item for FIFO tracking
-        // Each order line is a separate inventory record
-        updated.push({
-          id: Date.now() + Math.random(),
-          partNumber: newItem.partNumber,
-          description: newItem.description,
-          quantity: newItem.quantity,
-          cost: newItem.cost,
-          lineTotal: newItem.lineTotal, // Store exact line total from invoice
-          cases: newItem.cases, // Number of cases
-          packing: newItem.packing, // Total items per case
-          packagesPerCase: newItem.packagesPerCase, // Packages in a case (X in X/Y)
-          itemsPerPackage: newItem.itemsPerPackage, // Items per package (Y in X/Y)
-          orderNumber: orderNumber,
-          orderDate: orderDate || new Date().toISOString(), // Use provided date or current date
-          vendor: vendor // Store vendor name
-        });
-      });
-      
-      return updated;
-    });
-    
-    addToHistory({
-      type: 'invoice',
-      name: invoiceName,
-      itemCount: items.length,
-      totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0)
-    });
-  }, []);
+  const addFromInvoice = useCallback(async (items, invoiceName = 'Invoice', orderNumber = null, orderDate = null, vendor = null) => {
+    if (!user) {
+      throw new Error('User must be logged in to add inventory');
+    }
+
+    try {
+      // Prepare inventory items for insertion
+      const inventoryItems = items.map(newItem => ({
+        user_id: user.id,
+        order_id: newItem.orderId, // This should be set from the order creation
+        part_number: newItem.partNumber,
+        description: newItem.description,
+        quantity: newItem.quantity,
+        cost: newItem.cost,
+        line_total: newItem.lineTotal,
+        packing: newItem.packing || '1/1',
+        order_number: orderNumber,
+        order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        vendor: vendor || 'Unknown'
+      }));
+
+      const { data, error } = await supabase
+        .from('inventory')
+        .insert(inventoryItems)
+        .select();
+
+      if (error) throw error;
+
+      // Map database format to app format
+      const mappedData = data.map(mapInventoryFromDB);
+
+      // Update local state
+      setInventory(prev => [...prev, ...mappedData]);
+
+      return mappedData;
+    } catch (error) {
+      console.error('Error adding inventory from invoice:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Remove items from shoot list (decreases quantity) - uses FIFO
-  const subtractFromShootList = useCallback((items, shootListName = 'Shoot List') => {
+  const subtractFromShootList = useCallback(async (items, shootListName = 'Shoot List') => {
+    if (!user) {
+      throw new Error('User must be logged in to subtract inventory');
+    }
+
     const warnings = [];
     
-    setInventory(prev => {
-      let updated = [...prev];
-      
-      items.forEach(removeItem => {
+    try {
+      // Process each item
+      for (const removeItem of items) {
         // Find all matching part numbers, sorted by order date (FIFO - oldest first)
-        const matchingItems = updated
-          .map((item, index) => ({ ...item, originalIndex: index }))
-          .filter(item => item.partNumber.toLowerCase() === removeItem.partNumber.toLowerCase())
+        const matchingItems = inventory
+          .filter(item => item.part_number?.toLowerCase() === removeItem.partNumber.toLowerCase())
           .sort((a, b) => {
-            // Sort by orderDate (oldest first)
-            const dateA = new Date(a.orderDate || 0).getTime();
-            const dateB = new Date(b.orderDate || 0).getTime();
+            const dateA = new Date(a.order_date || 0).getTime();
+            const dateB = new Date(b.order_date || 0).getTime();
             return dateA - dateB;
           });
         
@@ -81,7 +109,7 @@ export const useInventory = () => {
             available: 0,
             notFound: true
           });
-          return;
+          continue;
         }
         
         // Calculate total available
@@ -98,94 +126,227 @@ export const useInventory = () => {
         // Subtract from oldest first (FIFO)
         let remainingToSubtract = removeItem.quantity;
         
-        matchingItems.forEach(item => {
-          if (remainingToSubtract <= 0) return;
+        for (const item of matchingItems) {
+          if (remainingToSubtract <= 0) break;
           
           const subtractFromThis = Math.min(item.quantity, remainingToSubtract);
           const newQuantity = item.quantity - subtractFromThis;
           remainingToSubtract -= subtractFromThis;
           
-          // Update the item in the updated array
-          updated[item.originalIndex] = {
-            ...updated[item.originalIndex],
-            quantity: newQuantity
-          };
-        });
-      });
+          if (newQuantity === 0) {
+            // Delete the item
+            const { error } = await supabase
+              .from('inventory')
+              .delete()
+              .eq('id', item.id);
+            
+            if (error) throw error;
+          } else {
+            // Update the quantity
+            const { error } = await supabase
+              .from('inventory')
+              .update({ quantity: newQuantity })
+              .eq('id', item.id);
+            
+            if (error) throw error;
+          }
+        }
+      }
       
-      // Remove items with zero quantity
-      updated = updated.filter(item => item.quantity > 0);
+      // Refresh inventory after all updates
+      await fetchInventory();
       
-      return updated;
-    });
-    
-    addToHistory({
-      type: 'shoot_list',
-      name: shootListName,
-      itemCount: items.length,
-      totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
-      warnings: warnings.length > 0 ? warnings : undefined
-    });
-    
-    return warnings;
-  }, []);
+      return warnings;
+    } catch (error) {
+      console.error('Error subtracting from shoot list:', error);
+      throw error;
+    }
+  }, [user, inventory]);
 
   // Add single item manually
-  const addItem = useCallback((item) => {
-    setInventory(prev => [...prev, {
-      id: Date.now() + Math.random(),
-      partNumber: item.partNumber,
-      description: item.description,
-      quantity: item.quantity,
-      cost: item.cost,
-      orderNumber: item.orderNumber || 'Manual Entry',
-      orderDate: new Date().toISOString()
-    }]);
-  }, []);
+  const addItem = useCallback(async (item) => {
+    if (!user) {
+      throw new Error('User must be logged in to add items');
+    }
+
+    try {
+      const newItem = {
+        user_id: user.id,
+        order_id: item.orderId, // Should be provided
+        part_number: item.partNumber,
+        description: item.description,
+        quantity: item.quantity,
+        cost: item.cost,
+        line_total: item.quantity * item.cost,
+        packing: item.packing || '1/1',
+        order_number: item.orderNumber || 'Manual Entry',
+        order_date: new Date().toISOString().split('T')[0],
+        vendor: item.vendor || 'Manual Entry'
+      };
+
+      const { data, error } = await supabase
+        .from('inventory')
+        .insert([newItem])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Map database format to app format
+      const mappedData = mapInventoryFromDB(data);
+
+      setInventory(prev => [...prev, mappedData]);
+      return mappedData;
+    } catch (error) {
+      console.error('Error adding item:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Update single item
-  const updateItem = useCallback((id, updates) => {
-    setInventory(prev => prev.map(item => 
-      item.id === id ? { ...item, ...updates } : item
-    ));
-  }, []);
+  const updateItem = useCallback(async (id, updates) => {
+    if (!user) {
+      throw new Error('User must be logged in to update items');
+    }
+
+    try {
+      const updateData = {};
+      if (updates.partNumber !== undefined) updateData.part_number = updates.partNumber;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.quantity !== undefined) updateData.quantity = updates.quantity;
+      if (updates.cost !== undefined) updateData.cost = updates.cost;
+      if (updates.lineTotal !== undefined) updateData.line_total = updates.lineTotal;
+      if (updates.packing !== undefined) updateData.packing = updates.packing;
+
+      const { data, error } = await supabase
+        .from('inventory')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Map database format to app format
+      const mappedData = mapInventoryFromDB(data);
+
+      setInventory(prev => prev.map(item => 
+        item.id === id ? mappedData : item
+      ));
+
+      return mappedData;
+    } catch (error) {
+      console.error('Error updating item:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Delete single item
-  const deleteItem = useCallback((id) => {
-    setInventory(prev => prev.filter(item => item.id !== id));
-  }, []);
+  const deleteItem = useCallback(async (id) => {
+    if (!user) {
+      throw new Error('User must be logged in to delete items');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setInventory(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Delete all items from a specific order
-  const deleteItemsByOrder = useCallback((orderNumber) => {
-    setInventory(prev => prev.filter(item => item.orderNumber !== orderNumber));
-    addToHistory({
-      type: 'order_delete',
-      name: `Order ${orderNumber} items removed`
-    });
-  }, []);
+  const deleteItemsByOrder = useCallback(async (orderNumber) => {
+    if (!user) {
+      throw new Error('User must be logged in to delete items');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('order_number', orderNumber)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setInventory(prev => prev.filter(item => item.order_number !== orderNumber));
+    } catch (error) {
+      console.error('Error deleting items by order:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Clear all inventory
-  const clearInventory = useCallback(() => {
-    setInventory([]);
-    addToHistory({ type: 'clear', name: 'Inventory Cleared' });
-  }, []);
+  const clearInventory = useCallback(async () => {
+    if (!user) {
+      throw new Error('User must be logged in to clear inventory');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setInventory([]);
+    } catch (error) {
+      console.error('Error clearing inventory:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Replace entire inventory (for imports)
-  const replaceInventory = useCallback((items) => {
-    const newInventory = items.map((item, index) => ({
-      id: Date.now() + index,
-      partNumber: item.partNumber || '',
-      description: item.description || '',
-      quantity: item.quantity || 0,
-      cost: item.cost || 0
-    }));
-    setInventory(newInventory);
-    addToHistory({
-      type: 'import',
-      name: 'Inventory Import',
-      itemCount: items.length
-    });
-  }, []);
+  const replaceInventory = useCallback(async (items) => {
+    if (!user) {
+      throw new Error('User must be logged in to replace inventory');
+    }
+
+    try {
+      // First, clear existing inventory
+      await clearInventory();
+
+      // Then add new items
+      const newItems = items.map(item => ({
+        user_id: user.id,
+        order_id: item.orderId, // Should be provided
+        part_number: item.partNumber || '',
+        description: item.description || '',
+        quantity: item.quantity || 0,
+        cost: item.cost || 0,
+        line_total: (item.quantity || 0) * (item.cost || 0),
+        packing: item.packing || '1/1',
+        order_number: item.orderNumber || 'Import',
+        order_date: new Date().toISOString().split('T')[0],
+        vendor: item.vendor || 'Import'
+      }));
+
+      const { data, error } = await supabase
+        .from('inventory')
+        .insert(newItems)
+        .select();
+
+      if (error) throw error;
+
+      // Map database format to app format
+      const mappedData = data.map(mapInventoryFromDB);
+
+      setInventory(mappedData);
+      return mappedData;
+    } catch (error) {
+      console.error('Error replacing inventory:', error);
+      throw error;
+    }
+  }, [user, clearInventory]);
 
   return {
     inventory,
@@ -197,6 +358,7 @@ export const useInventory = () => {
     deleteItem,
     deleteItemsByOrder,
     clearInventory,
-    replaceInventory
+    replaceInventory,
+    refetch: fetchInventory
   };
 };
