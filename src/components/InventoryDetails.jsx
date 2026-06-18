@@ -107,11 +107,6 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
           </tbody>
         </table>
       </div>
-
-      <div className="fifo-note">
-        <strong>ℹ️ FIFO (First In, First Out):</strong> Items are sorted by order date. When using inventory for shows, 
-        the oldest items (marked with 🔄) are used first.
-      </div>
     </div>
   );
 }
