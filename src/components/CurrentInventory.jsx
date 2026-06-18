@@ -342,25 +342,24 @@ function CurrentInventory({ inventory, shows, orders }) {
       </div>
 
       <div className="current-inventory-table-container">
-        <table className="current-inventory-table">
-           <thead>
-            <tr>
-              <th></th>
-              <th onClick={() => handleSort('partNumber')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Part Number {sortColumn === 'partNumber' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-              <th onClick={() => handleSort('description')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Description {sortColumn === 'description' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-              <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Available {sortColumn === 'available' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-               <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                 Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
+         <table className="current-inventory-table">
+            <thead>
+             <tr>
+               <th onClick={() => handleSort('partNumber')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                 Part Number {sortColumn === 'partNumber' && (sortDirection === 'asc' ? '▲' : '▼')}
                </th>
-               <th>Links</th>
-            </tr>
-            </thead>
+               <th onClick={() => handleSort('description')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                 Description {sortColumn === 'description' && (sortDirection === 'asc' ? '▲' : '▼')}
+               </th>
+               <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                 Available {sortColumn === 'available' && (sortDirection === 'asc' ? '▲' : '▼')}
+               </th>
+                <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
+                </th>
+                <th>Links</th>
+             </tr>
+             </thead>
             <tbody>
               {sortedInventory.map((item, index) => (
                 <tr 
