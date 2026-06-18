@@ -487,10 +487,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                fontSize: '13px',
                color: '#0c4a8a'
              }}>
-               <strong>📄 PDF Shoot List (Finale 3D Report):</strong>
-               <p style={{ margin: '8px 0 4px 0' }}>
-                 Finale 3D pyrotechnics show report with "Product Totals" section
-               </p>
+               <strong>📄 PDF Shoot List (Finale 3D "Product Totals" Report):</strong>
                <div style={{ 
                  background: 'white', 
                  border: '1px solid #b3d9ff',
@@ -507,9 +504,7 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                  <div>PFX30 | Palm Cake | 12</div>
                </div>
                <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
-                 <li>Export directly from Finale 3D (File → Export...)</li>
-                 <li>Must include "Product Totals" section</li>
-                 <li>System extracts items automatically</li>
+                 <li>Finale 3D Report: <strong>"Product Totals"</strong></li>
                </ul>
              </div>
            )}
