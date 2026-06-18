@@ -2,7 +2,9 @@ services:
   - type: web
     name: fireworks-inventory
     env: node
-    buildCommand: npm install && npm run build
+    buildCommand: |
+      apt-get update && apt-get install -y poppler-utils
+      npm install && npm run build
     startCommand: NODE_ENV=production node server/index.js
     envVars:
       - key: NODE_VERSION
