@@ -111,15 +111,18 @@ function LoginPage() {
             <span>or</span>
           </div>
 
-          <button 
-            type="button"
-            className="btn-social btn-google"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <img src="https://www.google.com/favicon.ico" alt="" />
-            Continue with Google
-          </button>
+          {/* Only show Google OAuth in production */}
+          {window.location.hostname !== 'localhost' && (
+            <button 
+              type="button"
+              className="btn-social btn-google"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+            >
+              <img src="https://www.google.com/favicon.ico" alt="" />
+              Continue with Google
+            </button>
+          )}
 
           <p className="auth-switch">
             Don't have an account? <Link to="/signup">Sign up</Link>
