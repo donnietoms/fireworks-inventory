@@ -48,6 +48,7 @@ export const mapInventoryFromDB = (dbItem) => {
     cost: dbItem.cost,
     lineTotal: dbItem.line_total,
     packing: dbItem.packing,
+    cases: dbItem.cases,
     orderNumber: dbItem.order_number,
     orderDate: dbItem.order_date,
     vendor: dbItem.vendor,
@@ -68,6 +69,7 @@ export const mapInventoryToDB = (appItem) => {
   if (appItem.cost !== undefined) dbItem.cost = appItem.cost;
   if (appItem.lineTotal !== undefined) dbItem.line_total = appItem.lineTotal;
   if (appItem.packing !== undefined) dbItem.packing = appItem.packing;
+  if (appItem.cases !== undefined) dbItem.cases = appItem.cases;
   if (appItem.orderNumber !== undefined) dbItem.order_number = appItem.orderNumber;
   if (appItem.orderDate !== undefined) dbItem.order_date = appItem.orderDate;
   if (appItem.vendor !== undefined) dbItem.vendor = appItem.vendor;

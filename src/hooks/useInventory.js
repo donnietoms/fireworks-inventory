@@ -53,8 +53,10 @@ export const useInventory = () => {
         let packingFormat = '1/1';
         if (newItem.packagesPerCase && newItem.itemsPerPackage) {
           packingFormat = `${newItem.packagesPerCase}/${newItem.itemsPerPackage}`;
-        } else if (newItem.packing && typeof newItem.packing === 'string') {
-          packingFormat = newItem.packing;
+        } else if (newItem.packing) {
+          // If packing is already a string in X/Y format, use it
+          // If it's a number, it's just the total - we can't reconstruct X/Y format
+          packingFormat = String(newItem.packing);
         }
         
         return {
@@ -66,6 +68,7 @@ export const useInventory = () => {
           cost: newItem.cost,
           line_total: newItem.lineTotal,
           packing: packingFormat,
+          cases: newItem.cases || 0, // Number of cases ordered
           order_number: orderNumber,
           order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
           vendor: vendor || 'Unknown'
