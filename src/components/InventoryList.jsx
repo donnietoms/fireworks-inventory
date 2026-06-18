@@ -194,18 +194,6 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="totals-row">
-              <td><strong>TOTALS</strong></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td><strong>{totalItems}</strong></td>
-              <td></td>
-              <td><strong>{formatCurrency(totalValue)}</strong></td>
-              <td></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>
