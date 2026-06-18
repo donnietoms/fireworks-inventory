@@ -93,13 +93,17 @@ function AccountSettings() {
   
   const loadInventoryCount = async () => {
     try {
-      const { count, error } = await supabase
+      // Get all inventory items for this user
+      const { data, error } = await supabase
         .from('inventory')
-        .select('*', { count: 'exact', head: true })
+        .select('part_number')
         .eq('user_id', user.id);
       
       if (error) throw error;
-      setInventoryCount(count || 0);
+      
+      // Count unique part numbers
+      const uniquePartNumbers = new Set(data?.map(item => item.part_number) || []);
+      setInventoryCount(uniquePartNumbers.size);
     } catch (error) {
       console.error('Error loading inventory count:', error);
     }
