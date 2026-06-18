@@ -55,7 +55,6 @@ function ShowDetailsTable({ show, onBack }) {
         <table className="show-items-table">
           <thead>
             <tr>
-              <th>Size</th>
               <th>Part Number</th>
               <th>Description</th>
               <th>Quantity</th>
@@ -67,7 +66,6 @@ function ShowDetailsTable({ show, onBack }) {
             {show.items && show.items.length > 0 ? (
               show.items.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.size || 'N/A'}</td>
                   <td>{item.partNumber}</td>
                   <td className="description-cell">{item.description}</td>
                   <td>{item.quantity || 0}</td>
@@ -77,14 +75,13 @@ function ShowDetailsTable({ show, onBack }) {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="empty-cell">No items in this show</td>
+                <td colSpan="5" className="empty-cell">No items in this show</td>
               </tr>
             )}
           </tbody>
           <tfoot>
             <tr className="totals-row">
               <td><strong>TOTALS</strong></td>
-              <td></td>
               <td></td>
               <td><strong>{show.totalItems}</strong></td>
               <td></td>
