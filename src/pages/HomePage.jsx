@@ -1,8 +1,10 @@
 // Marketing homepage
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './HomePage.css';
 
 function HomePage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pricingPlans = [
     {
       name: 'Starter',
@@ -59,7 +61,26 @@ function HomePage() {
             <Link to="/login" className="btn-login">Login</Link>
             <Link to="/signup" className="btn-signup">Sign Up Free</Link>
           </nav>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
         </div>
+        
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="mobile-menu">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <Link to="/login" className="btn-login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+            <Link to="/signup" className="btn-signup" onClick={() => setMobileMenuOpen(false)}>Sign Up Free</Link>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
