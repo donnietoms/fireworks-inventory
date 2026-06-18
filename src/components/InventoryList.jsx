@@ -18,8 +18,7 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
     items: inventory.map(item => ({
       partNumber: item.partNumber,
       description: item.description,
-      packagesPerCase: item.packagesPerCase,
-      itemsPerPackage: item.itemsPerPackage,
+      packing: item.packing, // Packing format as string (e.g., "24/4")
       cases: item.cases,
       quantity: item.quantity,
       cost: item.cost,
@@ -52,11 +51,9 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
     // Convert to array and calculate weighted average cost
     let data = Object.values(groupedInventory).map(group => {
       const avgCost = group.totalQuantity > 0 ? group.totalValue / group.totalQuantity : 0;
-      // Get packing from first item (all items in same order should have same packing)
+      // Get packing from first item's packing field (stored as "X/Y" format)
       const firstItem = group.items[0];
-      const packing = firstItem.packagesPerCase && firstItem.itemsPerPackage 
-        ? `${firstItem.packagesPerCase}/${firstItem.itemsPerPackage}` 
-        : '-';
+      const packing = firstItem.packing || '-';
       
       return {
         ...group,

@@ -48,19 +48,29 @@ export const useInventory = () => {
 
     try {
       // Prepare inventory items for insertion
-      const inventoryItems = items.map(newItem => ({
-        user_id: user.id,
-        order_id: newItem.orderId, // This should be set from the order creation
-        part_number: newItem.partNumber,
-        description: newItem.description,
-        quantity: newItem.quantity,
-        cost: newItem.cost,
-        line_total: newItem.lineTotal,
-        packing: newItem.packing || '1/1',
-        order_number: orderNumber,
-        order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-        vendor: vendor || 'Unknown'
-      }));
+      const inventoryItems = items.map(newItem => {
+        // Convert packing to X/Y format if packagesPerCase and itemsPerPackage are provided
+        let packingFormat = '1/1';
+        if (newItem.packagesPerCase && newItem.itemsPerPackage) {
+          packingFormat = `${newItem.packagesPerCase}/${newItem.itemsPerPackage}`;
+        } else if (newItem.packing && typeof newItem.packing === 'string') {
+          packingFormat = newItem.packing;
+        }
+        
+        return {
+          user_id: user.id,
+          order_id: newItem.orderId, // This should be set from the order creation
+          part_number: newItem.partNumber,
+          description: newItem.description,
+          quantity: newItem.quantity,
+          cost: newItem.cost,
+          line_total: newItem.lineTotal,
+          packing: packingFormat,
+          order_number: orderNumber,
+          order_date: orderDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+          vendor: vendor || 'Unknown'
+        };
+      });
 
       const { data, error } = await supabase
         .from('inventory')

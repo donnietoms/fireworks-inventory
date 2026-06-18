@@ -492,7 +492,7 @@ export const exportOrderToCSV = (order) => {
     rows.push([
       item.partNumber,
       item.description,
-      item.packagesPerCase && item.itemsPerPackage ? `${item.packagesPerCase}/${item.itemsPerPackage}` : '-',
+      item.packing || '-',
       item.cases || 0,
       item.quantity || 0,
       item.cost?.toFixed(4) || '0.0000',
@@ -528,7 +528,7 @@ export const exportOrderToExcel = (order) => {
   const itemsData = order.items.map(item => ({
     'Part Number': item.partNumber,
     'Description': item.description,
-    'Packing': item.packagesPerCase && item.itemsPerPackage ? `${item.packagesPerCase}/${item.itemsPerPackage}` : '-',
+    'Packing': item.packing || '-',
     'Qty Ordered': item.cases || 0,
     'Total Items': item.quantity || 0,
     'Cost/Item': parseFloat(item.cost?.toFixed(4)) || 0,
