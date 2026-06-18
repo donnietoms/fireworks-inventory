@@ -31,10 +31,12 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  const { user } = useAuth();
+  
   return (
     <Routes>
-      {/* Public marketing pages */}
-      <Route path="/" element={<PublicRoute><HomePage /></PublicRoute>} />
+      {/* Public marketing pages - allow logged-in users to view homepage */}
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
       
@@ -51,8 +53,8 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" />} />
+      {/* Fallback - redirect to home if not logged in, app if logged in */}
+      <Route path="*" element={<Navigate to={user ? "/app" : "/"} />} />
     </Routes>
   );
 }

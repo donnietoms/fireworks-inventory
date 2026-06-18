@@ -1,10 +1,12 @@
 // Marketing homepage
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './HomePage.css';
 
 function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
   const pricingPlans = [
     {
       name: 'Starter',
@@ -58,8 +60,14 @@ function HomePage() {
           <nav className="nav">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
-            <Link to="/login" className="btn-login">Login</Link>
-            <Link to="/signup" className="btn-signup">Sign Up Free</Link>
+            {user ? (
+              <Link to="/app" className="btn-signup">Go to App</Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn-login">Login</Link>
+                <Link to="/signup" className="btn-signup">Sign Up Free</Link>
+              </>
+            )}
           </nav>
           
           {/* Mobile Menu Button */}
@@ -77,8 +85,14 @@ function HomePage() {
           <div className="mobile-menu">
             <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-            <Link to="/login" className="btn-login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-            <Link to="/signup" className="btn-signup" onClick={() => setMobileMenuOpen(false)}>Sign Up Free</Link>
+            {user ? (
+              <Link to="/app" className="btn-signup" onClick={() => setMobileMenuOpen(false)}>Go to App</Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn-login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+                <Link to="/signup" className="btn-signup" onClick={() => setMobileMenuOpen(false)}>Sign Up Free</Link>
+              </>
+            )}
           </div>
         )}
       </header>
@@ -95,8 +109,8 @@ function HomePage() {
               Built specifically for professional pyrotechnicians.
             </p>
             <div className="hero-cta">
-              <Link to="/signup" className="btn-primary">
-                Start Free 14-Day Trial
+              <Link to={user ? "/app" : "/signup"} className="btn-primary">
+                {user ? "Go to App" : "Start Free 14-Day Trial"}
               </Link>
               <a href="#demo" className="btn-secondary">
                 Watch Demo
