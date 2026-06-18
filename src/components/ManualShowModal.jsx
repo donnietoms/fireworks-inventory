@@ -198,9 +198,6 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
 
   if (!isOpen) return null;
 
-  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalValue = items.reduce((sum, item) => sum + (item.quantity * item.cost), 0);
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large-modal" onClick={(e) => e.stopPropagation()}>
@@ -537,22 +534,13 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
                                ✕
                              </button>
                            </td>
-                         </tr>
-                       );
-                     })}
-                 </tbody>
-                <tfoot>
-                  <tr className="totals-row">
-                    <td colSpan="2"><strong>TOTALS</strong></td>
-                    <td><strong>{totalQuantity}</strong></td>
-                    <td></td>
-                    <td><strong>${totalValue.toFixed(2)}</strong></td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          )}
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+               </table>
+             </div>
+           )}
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="btn-cancel">
