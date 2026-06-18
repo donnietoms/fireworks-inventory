@@ -17,6 +17,11 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Setup scripts with sensitive keys
+setup-supabase-storage.js
+supabase-schema.sql
+supabase-storage-policies.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

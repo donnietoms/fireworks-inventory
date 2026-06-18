@@ -1,6 +1,7 @@
 // Login page
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './AuthPages.css';
 
 function LoginPage() {
@@ -9,38 +10,27 @@ function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // TODO: Replace with actual authentication
-    // For now, simulate login with demo admin account
-    setTimeout(() => {
-      // Check for demo admin account
-      if (email === 'admin@fireworksinventory.com' && password === 'admin') {
-        localStorage.setItem('user', JSON.stringify({ 
-          email: 'admin@fireworksinventory.com', 
-          name: 'Admin User',
-          role: 'admin'
-        }));
-        // Force page reload to update user state in App.jsx
-        window.location.href = '/app';
-      } else if (email && password) {
-        // Any other email/password combination works for demo
-        localStorage.setItem('user', JSON.stringify({ 
-          email, 
-          name: email.split('@')[0],
-          role: 'user'
-        }));
-        // Force page reload to update user state in App.jsx
-        window.location.href = '/app';
-      } else {
-        setError('Please enter email and password');
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
         setLoading(false);
+      } else {
+        // Successfully logged in, redirect to app
+        navigate('/app');
       }
-    }, 500);
+    } catch (err) {
+      setError('An unexpected error occurred');
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,9 +45,7 @@ function LoginPage() {
           <p className="auth-subtitle">Log in to your account</p>
 
           <div className="demo-notice">
-            <strong>Demo Account:</strong><br />
-            Email: <code>admin@fireworksinventory.com</code><br />
-            Password: <code>admin</code>
+            <strong>Note:</strong> Create an account to get started, or sign in if you already have one.
           </div>
 
           {error && <div className="error-message">{error}</div>}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { useInventory } from './hooks/useInventory';
 import { useOrders } from './hooks/useOrders';
 import { useShows } from './hooks/useShows';
@@ -19,7 +20,8 @@ import { exportToCSV, exportToExcel } from './utils/fileParser';
 import { exportToJSON, importFromJSON } from './utils/storage';
 import './InventoryApp.css';
 
-function InventoryApp({ user }) {
+function InventoryApp() {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const {
     inventory,
@@ -352,11 +354,10 @@ function InventoryApp({ user }) {
     setActiveTab('orders');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to log out?')) {
-      localStorage.removeItem('user');
+      await signOut();
       navigate('/');
-      window.location.reload(); // Reload to reset app state
     }
   };
 
