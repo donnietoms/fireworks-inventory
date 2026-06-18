@@ -886,18 +886,34 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                    const qty = getEffectiveQuantity(item);
                    const cost = getEffectiveCost(item);
                    
-                   // For shoot lists, check if item is in inventory - use selected part number if remapped
-                   const selectedPartNumber = partNumberEdits[item.partNumber] || item.partNumber;
-                   const inventoryItems = !isInvoice ? inventory.filter(inv => inv.partNumber === selectedPartNumber) : [];
-                   const hasInventory = inventoryItems.length > 0;
-                   const inventoryQty = inventoryItems.reduce((sum, inv) => sum + inv.quantity, 0);
-                   
-                   // Calculate weighted average cost from all matching inventory items
-                   let inventoryCost = 0;
-                   if (hasInventory && inventoryQty > 0) {
-                     const totalCost = inventoryItems.reduce((sum, inv) => sum + (inv.cost * inv.quantity), 0);
-                     inventoryCost = totalCost / inventoryQty;
-                   }
+                    // For shoot lists, check if item is in inventory - use selected part number if remapped
+                    const selectedPartNumber = partNumberEdits[item.partNumber] || item.partNumber;
+                    const inventoryItems = !isInvoice ? inventory
+                      .filter(inv => inv.partNumber === selectedPartNumber)
+                      .sort((a, b) => {
+                        const dateA = new Date(a.orderDate || 0).getTime();
+                        const dateB = new Date(b.orderDate || 0).getTime();
+                        return dateA - dateB; // Oldest first (FIFO)
+                      }) : [];
+                    const hasInventory = inventoryItems.length > 0;
+                    const inventoryQty = inventoryItems.reduce((sum, inv) => sum + inv.quantity, 0);
+                    
+                    // Calculate FIFO cost from inventory (oldest items first)
+                    let inventoryCost = 0;
+                    if (hasInventory && item.quantity > 0) {
+                      let remainingQty = item.quantity;
+                      let totalCost = 0;
+                      
+                      for (const invItem of inventoryItems) {
+                        if (remainingQty <= 0) break;
+                        
+                        const qtyToTake = Math.min(invItem.quantity, remainingQty);
+                        totalCost += qtyToTake * invItem.cost;
+                        remainingQty -= qtyToTake;
+                      }
+                      
+                      inventoryCost = totalCost / item.quantity;
+                    }
                   
                    return (
                      <tr key={idx} style={(item.needsPacking && !packingEdits[item.partNumber]) || (item.needsPartNumber && !missingPartNumbers[idx]) ? { background: '#fff3cd' } : {}}>

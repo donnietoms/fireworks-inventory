@@ -263,29 +263,49 @@ function InventoryApp() {
         }
       }
       
-      // Cross-reference items with inventory to get cost
+      // Cross-reference items with inventory to get FIFO cost
       const enrichedItems = items.map(item => {
-        // Find all matching inventory items by part number
-        const inventoryItems = inventory.filter(invItem => 
-          invItem.partNumber === item.partNumber
-        );
+        // Find all matching inventory items by part number, sorted by order date (FIFO - oldest first)
+        const inventoryItems = inventory
+          .filter(invItem => invItem.partNumber === item.partNumber)
+          .sort((a, b) => {
+            const dateA = new Date(a.orderDate || 0).getTime();
+            const dateB = new Date(b.orderDate || 0).getTime();
+            return dateA - dateB; // Oldest first
+          });
         
-        // Calculate weighted average cost from all matching inventory items
+        if (inventoryItems.length === 0) {
+          // Not in inventory - set cost to 0
+          return {
+            ...item,
+            cost: 0,
+            inInventory: false,
+            availableQuantity: 0
+          };
+        }
+        
+        // Calculate FIFO cost by taking from oldest inventory first
+        let remainingQty = item.quantity;
         let totalCost = 0;
-        let totalQty = 0;
+        let totalAvailable = 0;
         
-        inventoryItems.forEach(invItem => {
-          totalCost += invItem.cost * invItem.quantity;
-          totalQty += invItem.quantity;
-        });
+        for (const invItem of inventoryItems) {
+          totalAvailable += invItem.quantity;
+          
+          if (remainingQty <= 0) continue;
+          
+          const qtyToTake = Math.min(invItem.quantity, remainingQty);
+          totalCost += qtyToTake * invItem.cost;
+          remainingQty -= qtyToTake;
+        }
         
-        const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+        const avgCost = item.quantity > 0 ? totalCost / item.quantity : 0;
         
         return {
           ...item,
-          cost: parseFloat(avgCost.toFixed(2)), // Weighted average cost
-          inInventory: inventoryItems.length > 0,
-          availableQuantity: totalQty
+          cost: parseFloat(avgCost.toFixed(4)), // FIFO cost per item
+          inInventory: true,
+          availableQuantity: totalAvailable
         };
       });
       
