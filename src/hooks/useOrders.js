@@ -57,7 +57,7 @@ export function useOrders() {
         subtotal: order.subtotal || 0,
         discount: order.discount || 0,
         total: order.total,
-        invoice_pdf_url: order.invoicePdfUrl || null,
+        invoice_pdf_url: order.invoiceFile || null, // Changed from invoicePdfUrl to invoiceFile
       };
 
       const { data, error } = await supabase

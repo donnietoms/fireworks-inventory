@@ -14,7 +14,7 @@ export const mapOrderFromDB = (dbOrder) => {
     subtotal: dbOrder.subtotal,
     discount: dbOrder.discount,
     total: dbOrder.total,
-    invoicePdfUrl: dbOrder.invoice_pdf_url,
+    invoiceFile: dbOrder.invoice_pdf_url, // Map to invoiceFile for consistency
     createdAt: dbOrder.created_at,
     updatedAt: dbOrder.updated_at
   };
@@ -31,7 +31,7 @@ export const mapOrderToDB = (appOrder) => {
   if (appOrder.subtotal !== undefined) dbOrder.subtotal = appOrder.subtotal;
   if (appOrder.discount !== undefined) dbOrder.discount = appOrder.discount;
   if (appOrder.total !== undefined) dbOrder.total = appOrder.total;
-  if (appOrder.invoicePdfUrl !== undefined) dbOrder.invoice_pdf_url = appOrder.invoicePdfUrl;
+  if (appOrder.invoiceFile !== undefined) dbOrder.invoice_pdf_url = appOrder.invoiceFile; // Map from invoiceFile
   
   return dbOrder;
 };
