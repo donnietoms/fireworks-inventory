@@ -127,7 +127,7 @@ function HomePage() {
             <div className="feature-card">
               <div className="feature-icon">📄</div>
               <h3>PDF Invoice Parsing</h3>
-              <p>Upload invoices from Wisley and other vendors. Automatic extraction of items, quantities, and pricing.</p>
+              <p>Upload PDF invoices from your vendors. Automatic extraction of items, quantities, and pricing.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📊</div>
