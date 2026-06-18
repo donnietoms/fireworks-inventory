@@ -137,7 +137,7 @@ function HomePage() {
             <div className="feature-card">
               <div className="feature-icon">🎯</div>
               <h3>Shoot List Management</h3>
-              <p>Track what you've used in each show. Automatic inventory deduction with warnings for low stock.</p>
+              <p>Track what you've used in each show. Automatic inventory deduction using FIFO (First In, First Out) costing.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📺</div>
