@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import FinaleDBModal from './FinaleDBModal';
 import ItemHistoryModal from './ItemHistoryModal';
-import { ReorderPointModal } from './ReorderPointModal';
-import { useReorderPoints } from '../hooks/useReorderPoints';
-import { getAlertStatus, getAlertColor } from '../utils/alerts';
 import './CurrentInventory.css';
 
 function CurrentInventory({ inventory, shows, orders }) {
@@ -14,10 +11,6 @@ function CurrentInventory({ inventory, shows, orders }) {
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPartNumber, setHistoryPartNumber] = useState(null);
-  const [showReorderModal, setShowReorderModal] = useState(false);
-  const [reorderItem, setReorderItem] = useState(null);
-  
-  const { reorderPoints, updateReorderPoint, getReorderPoint } = useReorderPoints();
   
   // Handle column header click for sorting
   const handleSort = (column) => {
@@ -288,15 +281,6 @@ function CurrentInventory({ inventory, shows, orders }) {
     setShowHistoryModal(true);
   };
 
-  const handleSetReorderPoint = (item) => {
-    setReorderItem(item);
-    setShowReorderModal(true);
-  };
-
-  const handleSaveReorderPoint = (partNumber, value) => {
-    updateReorderPoint(partNumber, value);
-  };
-
   if (currentInventory.length === 0) {
     return (
       <div className="empty-state">
@@ -371,96 +355,45 @@ function CurrentInventory({ inventory, shows, orders }) {
               <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                 Available {sortColumn === 'available' && (sortDirection === 'asc' ? '▲' : '▼')}
               </th>
-              <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-              <th style={{ width: '100px' }}>Reorder Point</th>
-              <th>Links</th>
+               <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                 Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
+               </th>
+               <th>Links</th>
             </tr>
-           </thead>
+            </thead>
             <tbody>
-              {sortedInventory.map((item, index) => {
-                const reorderPoint = getReorderPoint(item.partNumber);
-                
-                // Find inventory item to get packing info
-                const invItem = inventory.find(
-                  inv => inv.partNumber.toLowerCase() === item.partNumber.toLowerCase()
-                );
-                const itemsPerCase = invItem?.packagesPerCase && invItem?.itemsPerPackage
-                  ? invItem.packagesPerCase * invItem.itemsPerPackage
-                  : null;
-                
-                const alertStatus = getAlertStatus(item.available, reorderPoint, itemsPerCase);
-                const alertColor = getAlertColor(alertStatus);
-                
-                return (
-                  <tr 
-                    key={index} 
-                    className="clickable-row" 
-                    onClick={() => handleItemHistoryClick(item.partNumber)} 
-                    style={{ cursor: 'pointer', borderLeftColor: alertColor }}
-                  >
-                    <td style={{ width: '20px', paddingLeft: '5px' }}>
-                      {alertStatus !== 'NORMAL' && (
-                        <div 
-                          className="alert-badge" 
-                          style={{ backgroundColor: alertColor }}
-                          title={alertStatus === 'CRITICAL' ? 'Critical Stock Level (≤25% of a case)' : 'Below Reorder Point (≤50% of a case)'}
-                        >
-                          ●
-                        </div>
-                      )}
-                    </td>
-                    <td>{item.partNumber}</td>
-                    <td className="description-cell">{item.description}</td>
-                    <td className="available-qty">{item.available}</td>
-                    <td>{formatCurrency(item.avgCost)}</td>
-                    <td className="reorder-cell" onClick={(e) => e.stopPropagation()}>
-                      {reorderPoint ? (
-                        <span className="reorder-value">
-                          {reorderPoint}
-                          <button
-                            onClick={() => handleSetReorderPoint(item)}
-                            className="btn-edit-reorder"
-                            title="Edit reorder point"
-                          >
-                            ✏️
-                          </button>
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleSetReorderPoint(item)}
-                          className="btn-set-reorder"
-                          title="Set reorder point"
-                        >
-                          Set
-                        </button>
-                      )}
-                    </td>
-                    <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleFinaleDBClick(item)}
-                        className="btn-youtube"
-                        title="Search YouTube"
-                      >
-                        📺 YouTube
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {sortedInventory.map((item, index) => (
+                <tr 
+                  key={index} 
+                  className="clickable-row" 
+                  onClick={() => handleItemHistoryClick(item.partNumber)} 
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td>{item.partNumber}</td>
+                  <td className="description-cell">{item.description}</td>
+                  <td className="available-qty">{item.available}</td>
+                  <td>{formatCurrency(item.avgCost)}</td>
+                  <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleFinaleDBClick(item)}
+                      className="btn-youtube"
+                      title="Search YouTube"
+                    >
+                      📺 YouTube
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
-           <tfoot>
-             <tr className="totals-row">
-               <td></td>
-               <td><strong>TOTAL</strong></td>
-               <td></td>
-               <td><strong>{totals.available}</strong></td>
-               <td><strong>{formatCurrency(totals.value)}</strong></td>
-               <td></td>
-               <td></td>
-             </tr>
-           </tfoot>
+            <tfoot>
+              <tr className="totals-row">
+                <td><strong>TOTAL</strong></td>
+                <td></td>
+                <td><strong>{totals.available}</strong></td>
+                <td><strong>{formatCurrency(totals.value)}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
         </table>
       </div>
 
@@ -486,19 +419,6 @@ function CurrentInventory({ inventory, shows, orders }) {
         shows={shows}
         orders={orders}
       />
-
-      {reorderItem && (
-        <ReorderPointModal
-          item={reorderItem}
-          currentReorderPoint={getReorderPoint(reorderItem.partNumber)}
-          onSave={handleSaveReorderPoint}
-          onClose={() => {
-            setShowReorderModal(false);
-            setReorderItem(null);
-          }}
-          inventory={inventory}
-        />
-      )}
     </div>
   );
 }
