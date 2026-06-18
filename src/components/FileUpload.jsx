@@ -837,22 +837,23 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                 </tr>
               </thead>
               <tbody>
-                {preview.items.map((item, idx) => {
-                  const packing = getEffectivePacking(item);
-                  const qty = getEffectiveQuantity(item);
-                  const cost = getEffectiveCost(item);
-                  
-                  // For shoot lists, check if item is in inventory
-                  const inventoryItems = !isInvoice ? inventory.filter(inv => inv.partNumber === item.partNumber) : [];
-                  const hasInventory = inventoryItems.length > 0;
-                  const inventoryQty = inventoryItems.reduce((sum, inv) => sum + inv.quantity, 0);
-                  
-                  // Calculate weighted average cost from all matching inventory items
-                  let inventoryCost = 0;
-                  if (hasInventory && inventoryQty > 0) {
-                    const totalCost = inventoryItems.reduce((sum, inv) => sum + (inv.cost * inv.quantity), 0);
-                    inventoryCost = totalCost / inventoryQty;
-                  }
+                 {preview.items.map((item, idx) => {
+                   const packing = getEffectivePacking(item);
+                   const qty = getEffectiveQuantity(item);
+                   const cost = getEffectiveCost(item);
+                   
+                   // For shoot lists, check if item is in inventory - use selected part number if remapped
+                   const selectedPartNumber = partNumberEdits[item.partNumber] || item.partNumber;
+                   const inventoryItems = !isInvoice ? inventory.filter(inv => inv.partNumber === selectedPartNumber) : [];
+                   const hasInventory = inventoryItems.length > 0;
+                   const inventoryQty = inventoryItems.reduce((sum, inv) => sum + inv.quantity, 0);
+                   
+                   // Calculate weighted average cost from all matching inventory items
+                   let inventoryCost = 0;
+                   if (hasInventory && inventoryQty > 0) {
+                     const totalCost = inventoryItems.reduce((sum, inv) => sum + (inv.cost * inv.quantity), 0);
+                     inventoryCost = totalCost / inventoryQty;
+                   }
                   
                   return (
                     <tr key={idx} style={item.needsPacking && !packingEdits[item.partNumber] ? { background: '#fff3cd' } : {}}>

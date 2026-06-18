@@ -20,6 +20,20 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
     }
   };
 
+  const formatShowDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const formatCurrency = (value) => {
     return `$${value.toFixed(2)}`;
   };
@@ -27,17 +41,16 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
   return (
     <div className="shows-table-container">
       <table className="shows-table">
-        <thead>
-          <tr>
-            <th>Show Name</th>
-            <th>Date</th>
-            <th>Location</th>
-            <th>Total Items</th>
-            <th>Total Value</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+         <thead>
+           <tr>
+             <th>Show Name</th>
+             <th>Show Date</th>
+             <th>Total Items</th>
+             <th>Total Value</th>
+             <th>Created</th>
+             <th>Actions</th>
+           </tr>
+         </thead>
         <tbody>
           {shows.map((show) => (
             <tr key={show.id}>
@@ -49,9 +62,8 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit }) {
                   {show.name}
                 </button>
               </td>
-              <td>{show.date || 'N/A'}</td>
-              <td>{show.location || 'N/A'}</td>
-              <td>{show.totalItems}</td>
+                <td>{formatShowDate(show.date)}</td>
+               <td>{show.totalItems}</td>
               <td>{formatCurrency(show.totalValue)}</td>
               <td>{formatDate(show.createdAt)}</td>
               <td>

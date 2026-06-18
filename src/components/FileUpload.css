@@ -113,7 +113,7 @@
 }
 
 .preview-table-wrapper {
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -258,12 +258,12 @@
   background: #e7f3ff;
   border: 2px solid #007bff;
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .generic-order-info h4 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   color: #333;
   font-size: 1rem;
 }
@@ -271,7 +271,7 @@
 .order-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .order-info-grid .form-group {
@@ -282,12 +282,12 @@
 .order-info-grid label {
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   font-size: 0.875rem;
 }
 
 .order-info-grid input {
-  padding: 0.5rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 0.875rem;
