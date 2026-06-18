@@ -77,7 +77,7 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
                   <td>
                     <span className="order-badge" title={index === 0 ? 'Oldest - Used first (FIFO)' : ''}>
                       {item.orderNumber}
-                      {index === 0 && <span className="fifo-indicator" title="Next to be used (FIFO)">🔄</span>}
+                      {index === 0 && <span className="fifo-indicator" title="Next to be used (FIFO) - First In, First Out">🔄</span>}
                     </span>
                   </td>
                 )}

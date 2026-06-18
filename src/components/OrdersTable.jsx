@@ -165,7 +165,7 @@ const OrdersTable = ({ orders, inventory = [], onUpdate, onDelete, onEdit, onVie
                       <button 
                         onClick={() => onViewInventory(order.orderNumber)} 
                         className="btn-inventory" 
-                        title="View Inventory"
+                        title="View Order Inventory"
                       >
                         📦
                       </button>

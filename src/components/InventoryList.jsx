@@ -99,14 +99,14 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
               <button 
                 onClick={() => exportOrderToCSV(completeOrder)} 
                 className="btn-export"
-                title="Export Order to CSV"
+                title="Export to CSV"
               >
                 📥 CSV
               </button>
               <button 
                 onClick={() => exportOrderToExcel(completeOrder)} 
                 className="btn-export"
-                title="Export Order to Excel"
+                title="Export to Excel"
               >
                 📥 XLS
               </button>

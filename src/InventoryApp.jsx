@@ -488,7 +488,7 @@ function InventoryApp() {
         </div>
         <div className="header-actions">
           <span className="user-name">👤 {user?.name || user?.email}</span>
-          <button onClick={handleLogout} className="btn-logout" title="Logout">
+          <button onClick={handleLogout} className="btn-logout" title="Log out of the application">
             Logout
           </button>
         </div>
@@ -565,10 +565,10 @@ function InventoryApp() {
         {activeTab === 'orders' && (
           <>
             <div className="orders-header">
-              <button onClick={() => setActiveTab('upload')} className="btn-primary" title="Upload Order">
+              <button onClick={() => setActiveTab('upload')} className="btn-primary" title="Upload an order invoice file">
                 📤 Upload Order
               </button>
-              <button onClick={() => setShowManualOrderModal(true)} className="btn-secondary" title="Manual Order Entry">
+              <button onClick={() => setShowManualOrderModal(true)} className="btn-secondary" title="Add order manually without uploading a file">
                 ✏️ Manual Order
               </button>
             </div>
@@ -586,10 +586,10 @@ function InventoryApp() {
         {activeTab === 'shows' && (
           <>
             <div className="orders-header">
-              <button onClick={() => setActiveTab('upload')} className="btn-primary" title="Upload Show">
+              <button onClick={() => setActiveTab('upload')} className="btn-primary" title="Upload a show file">
                 📤 Upload Show
               </button>
-              <button onClick={() => setShowManualShowModal(true)} className="btn-secondary" title="Manual Show Entry">
+              <button onClick={() => setShowManualShowModal(true)} className="btn-secondary" title="Add show manually without uploading a file">
                 ✏️ Manual Show
               </button>
             </div>
