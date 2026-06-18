@@ -59,10 +59,15 @@ export const AuthProvider = ({ children }) => {
 
   // Sign in with Google OAuth
   const signInWithGoogle = async () => {
+    // Always use production URL for redirect
+    const redirectUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5173/app'
+      : 'https://fireworksinventory.com/app';
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/app`
+        redirectTo: redirectUrl
       }
     })
     return { data, error }
