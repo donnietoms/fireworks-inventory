@@ -142,7 +142,7 @@ function HomePage() {
             <div className="feature-card">
               <div className="feature-icon">📺</div>
               <h3>YouTube Integration</h3>
-              <p>Search and watch product videos directly in the app. See effects before you buy.</p>
+              <p>Search YouTube for product demos and effect videos. Preview what you already own before using it in a show.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🎨</div>
