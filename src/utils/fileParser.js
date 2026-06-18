@@ -610,3 +610,115 @@ export const exportShowToExcel = (show) => {
   
   XLSX.writeFile(workbook, `show_${show.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
+
+// Parse shoot list from CSV/Excel format
+export const parseShootListCSV = async (file) => {
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    const items = [];
+    let inProductTotals = false;
+    let headerFound = false;
+    let showInfo = {
+      name: null,
+      date: null
+    };
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Look for "Product Totals" section
+      if (line.toUpperCase().includes('PRODUCT TOTALS')) {
+        inProductTotals = true;
+        headerFound = false;
+        continue;
+      }
+      
+      // If we're in Product Totals section
+      if (inProductTotals) {
+        // Check if this is the header row (contains pipe or tab separators)
+        if (!headerFound && (line.includes('|') || line.includes('\t'))) {
+          // Likely a header row like "Part Number | Description | Quantity"
+          if (line.toLowerCase().includes('part number') || 
+              line.toLowerCase().includes('description') || 
+              line.toLowerCase().includes('quantity')) {
+            headerFound = true;
+            continue;
+          }
+        }
+        
+        // Parse data rows
+        if (headerFound) {
+          // Split by pipe or tab
+          const separator = line.includes('|') ? '|' : '\t';
+          const columns = line.split(separator).map(col => col.trim());
+          
+          // Skip if not enough columns
+          if (columns.length < 3) {
+            // Could be end of Product Totals section
+            if (line.toLowerCase().includes('total') || line === '') {
+              break;
+            }
+            continue;
+          }
+          
+          // Try to parse as: Part Number | Description | Quantity
+          const partNumber = columns[0];
+          const description = columns[1];
+          const quantityStr = columns[2];
+          
+          // Skip if Part Number is empty or looks like a header
+          if (!partNumber || partNumber.toLowerCase().includes('part') || 
+              partNumber.toLowerCase().includes('total')) {
+            continue;
+          }
+          
+          const quantity = parseInt(quantityStr);
+          
+          // Only add if quantity is a valid number
+          if (!isNaN(quantity) && quantity > 0) {
+            items.push({
+              partNumber: partNumber,
+              description: description,
+              quantity: quantity
+            });
+          }
+        }
+      }
+    }
+    
+    return {
+      items,
+      showInfo,
+      fileName: file.name
+    };
+  } catch (error) {
+    console.error('Error parsing shoot list CSV:', error);
+    throw new Error('Failed to parse shoot list: ' + error.message);
+  }
+};
+
+// Parse Excel shoot list (XLSX/XLS format)
+export const parseShootListExcel = async (file) => {
+  try {
+    // For Excel files, we need to convert to CSV first
+    // or use a library like xlsx
+    // For now, use the same CSV parser after converting
+    
+    // Try to use a simple approach: read as text if possible
+    // This is a simplified implementation
+    const text = await file.text();
+    
+    // If it's tab-separated or pipe-separated, use CSV parser
+    if (text.includes('\t') || text.includes('|')) {
+      return parseShootListCSV(file);
+    }
+    
+    // Otherwise, throw error asking for CSV format
+    throw new Error('Excel files should be exported as CSV with pipe (|) or tab separators');
+  } catch (error) {
+    console.error('Error parsing shoot list Excel:', error);
+    throw new Error('Failed to parse shoot list Excel: ' + error.message);
+  }
+};

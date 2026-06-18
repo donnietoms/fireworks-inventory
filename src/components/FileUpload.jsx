@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { parseFile } from '../utils/fileParser';
+import { parseFile, parseShootListCSV, parseShootListExcel } from '../utils/fileParser';
 import { parseVendorFile } from '../utils/vendorParsers';
 import { useVendors } from '../hooks/useVendors';
 import { API_BASE_URL } from '../config';
@@ -41,58 +41,73 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
     }
   };
 
-  const processFile = async (file, retryWithVendor = null) => {
-    setUploading(true);
-    setNeedsVendorSelection(false);
-    
-    try {
-      let result;
-      
-      // Use PDF parser server for PDF files
-      if (file.name.toLowerCase().endsWith('.pdf')) {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        // Use different endpoint for shoot lists vs invoices
-        const endpoint = isInvoice ? '/api/parse-pdf' : '/api/parse-shootlist';
-        
-        // Add vendor hint if not auto-detect (invoices only)
-        if (isInvoice) {
-          const vendorToUse = retryWithVendor || (selectedVendor !== 'auto' ? selectedVendor : null);
-          if (vendorToUse) {
-            formData.append('vendor', vendorToUse);
-          }
-        }
-        
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          body: formData
-        });
-        
-      if (!response.ok) {
-        const error = await response.json();
-        
-        // If vendor detection failed, show vendor selector (invoices only)
-        if (error.needsVendorSelection) {
-          setNeedsVendorSelection(true);
-          setUploading(false);
-          return;
-        }
-        
-        throw new Error(error.message || 'Failed to parse PDF');
-      }
-      
-      result = await response.json();
-      
-      // Store detected vendor but don't set it yet - let user confirm
-      result.detectedVendor = result.detectedVendor || result.vendor;
-    }
-      // Use vendor-specific parser for Excel files
-      else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-        result = await parseVendorFile(file);
-      } else {
-        result = await parseFile(file);
-      }
+   const processFile = async (file, retryWithVendor = null) => {
+     setUploading(true);
+     setNeedsVendorSelection(false);
+     
+     try {
+       let result;
+       
+       // Use PDF parser server for PDF files
+       if (file.name.toLowerCase().endsWith('.pdf')) {
+         const formData = new FormData();
+         formData.append('file', file);
+         
+         // Use different endpoint for shoot lists vs invoices
+         const endpoint = isInvoice ? '/api/parse-pdf' : '/api/parse-shootlist';
+         
+         // Add vendor hint if not auto-detect (invoices only)
+         if (isInvoice) {
+           const vendorToUse = retryWithVendor || (selectedVendor !== 'auto' ? selectedVendor : null);
+           if (vendorToUse) {
+             formData.append('vendor', vendorToUse);
+           }
+         }
+         
+         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+           method: 'POST',
+           body: formData
+         });
+         
+       if (!response.ok) {
+         const error = await response.json();
+         
+         // If vendor detection failed, show vendor selector (invoices only)
+         if (error.needsVendorSelection) {
+           setNeedsVendorSelection(true);
+           setUploading(false);
+           return;
+         }
+         
+         throw new Error(error.message || 'Failed to parse PDF');
+       }
+       
+       result = await response.json();
+       
+       // Store detected vendor but don't set it yet - let user confirm
+       result.detectedVendor = result.detectedVendor || result.vendor;
+       }
+       // For shoot lists, handle CSV/Excel with dedicated parsers
+       else if (!isInvoice && (file.name.toLowerCase().endsWith('.csv') || 
+                                file.name.toLowerCase().endsWith('.txt'))) {
+         result = await parseShootListCSV(file);
+       }
+       else if (!isInvoice && (file.name.toLowerCase().endsWith('.xlsx') || 
+                                file.name.toLowerCase().endsWith('.xls'))) {
+         result = await parseShootListExcel(file);
+       }
+       // For invoices, use vendor-specific parser for Excel files
+       else if (isInvoice && (file.name.toLowerCase().endsWith('.xlsx') || 
+                              file.name.toLowerCase().endsWith('.xls'))) {
+         result = await parseVendorFile(file);
+       } 
+       // For invoices, handle CSV
+       else if (isInvoice && file.name.toLowerCase().endsWith('.csv')) {
+         result = await parseFile(file);
+       }
+       else {
+         throw new Error('Unsupported file format');
+       }
       
       if (result.items.length === 0) {
         alert('No items found in file. Please check the file format.');
@@ -474,6 +489,9 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
              }}>
                <strong>📋 Shoot List Format (Product Totals):</strong>
                <p style={{ margin: '8px 0 4px 0' }}>
+                 Supported formats: <strong>PDF, CSV, Excel (.xlsx/.xls), TXT</strong>
+               </p>
+               <p style={{ margin: '8px 0 4px 0' }}>
                  Your file should contain a "Product Totals" section with this layout:
                </p>
                <div style={{ 
@@ -494,11 +512,11 @@ const FileUpload = ({ type, onUpload, disabled, inventory = [] }) => {
                <ul style={{ margin: '4px 0 4px 20px', paddingLeft: '0' }}>
                  <li>Section header: <strong>"Product Totals"</strong> (exact text)</li>
                  <li>Column separators: <strong>| (pipe)</strong> or <strong>tabs</strong></li>
-                 <li>Required columns: Part Number | Description | Quantity</li>
+                 <li>Required columns: <strong>Part Number | Description | Quantity</strong></li>
                  <li>Quantity = total items used in show</li>
                </ul>
                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#0c5aa6' }}>
-                 💡 Exported from Finale 3D or copied from your show notes
+                 💡 Typically from Finale 3D exports, text files, or spreadsheets
                </p>
              </div>
            )}
