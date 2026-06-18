@@ -147,7 +147,7 @@ function HomePage() {
             <div className="feature-card">
               <div className="feature-icon">🎨</div>
               <h3>Finale 3D Export</h3>
-              <p>Export your inventory and quotas directly to Finale 3D for show design.</p>
+              <p>Export your inventory to CSV format for import into Finale 3D for show design and choreography.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">☁️</div>
