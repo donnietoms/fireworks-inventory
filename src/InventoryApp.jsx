@@ -508,6 +508,9 @@ function InventoryApp() {
         </div>
         <div className="header-actions">
           <span className="user-name">👤 {user?.name || user?.email}</span>
+          <button onClick={() => navigate('/')} className="btn-logout" title="Return to homepage">
+            Home
+          </button>
           <button onClick={() => navigate('/app/settings')} className="btn-logout" title="View your profile and account settings">
             Profile
           </button>
