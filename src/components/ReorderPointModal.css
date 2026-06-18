@@ -1,0 +1,283 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  max-width: 450px;
+  width: 90%;
+  overflow: auto;
+  max-height: 90vh;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.item-info {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: #666;
+  margin-right: 10px;
+  min-width: 120px;
+}
+
+.info-row .value {
+  color: #333;
+  word-break: break-word;
+  max-width: 60%;
+  text-align: right;
+}
+
+.packing-calc {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.help-text {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.reorder-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.reorder-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.case-conversion {
+  background: #e8f5e9;
+  border-left: 3px solid #4CAF50;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #2e7d32;
+}
+
+.case-conversion strong {
+  color: #1b5e20;
+}
+
+.info-box {
+  background: #e3f2fd;
+  padding: 15px;
+  border-left: 4px solid #2196F3;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.info-box strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.info-box p {
+  margin: 8px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.info-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+}
+
+.info-box li {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+}
+
+.info-box li:last-child {
+  margin-bottom: 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 16px;
+}
+
+.badge.critical {
+  color: #f44336;
+}
+
+.badge.warning {
+  color: #ff9800;
+}
+
+.badge.normal {
+  color: #4CAF50;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-cancel {
+  padding: 10px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #45a049;
+}
+
+.btn-secondary {
+  background: #f44336;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #da190b;
+}
+
+.btn-cancel {
+  background: #eee;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background: #ddd;
+}
+
+@media (max-width: 600px) {
+  .modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-cancel {
+    width: 100%;
+  }
+
+  .info-row {
+    flex-direction: column;
+  }
+
+  .info-row .value {
+    max-width: 100%;
+    text-align: left;
+    margin-top: 4px;
+  }
+}

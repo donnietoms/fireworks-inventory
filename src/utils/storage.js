@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = 'fireworks_inventory';
 const HISTORY_KEY = 'fireworks_history';
+const REORDER_POINTS_KEY = 'fireworks_reorder_points';
 
 // Load inventory from localStorage
 export const loadInventory = () => {
@@ -72,6 +73,46 @@ export const exportToJSON = (inventory) => {
   link.download = `fireworks_inventory_${new Date().toISOString().split('T')[0]}.json`;
   link.click();
   URL.revokeObjectURL(url);
+};
+
+// Load reorder points (per part number)
+export const loadReorderPoints = () => {
+  try {
+    const data = localStorage.getItem(REORDER_POINTS_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch (error) {
+    console.error('Error loading reorder points:', error);
+    return {};
+  }
+};
+
+// Save reorder points
+export const saveReorderPoints = (reorderPoints) => {
+  try {
+    localStorage.setItem(REORDER_POINTS_KEY, JSON.stringify(reorderPoints));
+    return true;
+  } catch (error) {
+    console.error('Error saving reorder points:', error);
+    return false;
+  }
+};
+
+// Set reorder point for a part number
+export const setReorderPoint = (partNumber, reorderPoint) => {
+  const points = loadReorderPoints();
+  if (reorderPoint === null || reorderPoint === 0) {
+    delete points[partNumber];
+  } else {
+    points[partNumber] = reorderPoint;
+  }
+  saveReorderPoints(points);
+  return points;
+};
+
+// Get reorder point for a part number
+export const getReorderPoint = (partNumber) => {
+  const points = loadReorderPoints();
+  return points[partNumber] || 0;
 };
 
 // Import inventory from JSON file
