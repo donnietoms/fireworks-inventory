@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import InventoryApp from './InventoryApp';
 import AccountSettings from './pages/AccountSettings';
+import FAQPage from './pages/FAQPage';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -37,6 +38,7 @@ function AppRoutes() {
     <Routes>
       {/* Public marketing pages - allow logged-in users to view homepage */}
       <Route path="/" element={<HomePage />} />
+      <Route path="/faq" element={<FAQPage />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
       

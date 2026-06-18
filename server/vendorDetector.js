@@ -44,6 +44,12 @@ export async function detectVendor(pdfPath) {
       return 'fireworksforever';
     }
     
+    // Check for RKM Fireworks
+    if (text.includes('rkm fireworks') ||
+        (text.includes('rkm') && text.includes('order number:'))) {
+      return 'rkm';
+    }
+    
     // Add more vendors here
     // if (text.includes('other vendor name')) {
     //   return 'other-vendor';
@@ -78,6 +84,11 @@ export function getSupportedVendors() {
     {
       id: 'fireworksforever',
       name: 'Fireworks Forever',
+      formats: ['pdf']
+    },
+    {
+      id: 'rkm',
+      name: 'RKM Fireworks',
       formats: ['pdf']
     }
     // Add more vendors as they're implemented

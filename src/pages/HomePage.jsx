@@ -6,7 +6,36 @@ import './HomePage.css';
 
 function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const { user } = useAuth();
+  
+  const popularFaqs = [
+    {
+      q: "How do I get started with Fireworks Inventory Manager?",
+      a: "Sign up for a free 14-day trial (no credit card required). Once logged in, you can start adding inventory manually, upload CSV/Excel files, or parse PDF invoices from supported vendors."
+    },
+    {
+      q: "Which vendors are supported for PDF invoice parsing?",
+      a: "We support PDF invoices from: Wisley (two-pass parsing for accuracy), Spirit of 76, American Wholesale, and Fireworks Forever. Upload the PDF and the system will automatically extract items, prices, quantities, and packing information."
+    },
+    {
+      q: "What is FIFO and how does it work?",
+      a: "FIFO (First In, First Out) means the oldest inventory items are used first when calculating show costs. Each time you add inventory from an order, those items are tracked separately. When you create a show, the system pulls from the oldest stock first, ensuring accurate cost tracking for your events."
+    },
+    {
+      q: "How are 'unique items' counted for subscription limits?",
+      a: "Unique items are counted by distinct part numbers, not total inventory records. For example, if you have 10 orders of the same firework (creating 10 FIFO records), it only counts as 1 unique item toward your limit."
+    },
+    {
+      q: "Is my data secure?",
+      a: "Yes, all data is stored in Supabase (PostgreSQL) with Row Level Security (RLS), ensuring your data is completely isolated from other users. We use industry-standard encryption for data in transit (HTTPS/SSL) and at rest."
+    }
+  ];
+  
+  const toggleFaq = (index) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
+  
   const pricingPlans = [
     {
       name: 'Starter',
@@ -60,6 +89,7 @@ function HomePage() {
           <nav className="nav">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
+            <Link to="/faq">FAQ</Link>
             {user ? (
               <Link to="/app" className="btn-signup">Go to App</Link>
             ) : (
@@ -85,6 +115,7 @@ function HomePage() {
           <div className="mobile-menu">
             <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <Link to="/faq" onClick={() => setMobileMenuOpen(false)}>FAQ</Link>
             {user ? (
               <Link to="/app" className="btn-signup" onClick={() => setMobileMenuOpen(false)}>Go to App</Link>
             ) : (
@@ -200,6 +231,43 @@ function HomePage() {
         </div>
       </section>
 
+      {/* FAQ Preview Section */}
+      <section id="faq" className="faq-preview">
+        <div className="container">
+          <h2 className="section-title">Frequently Asked Questions</h2>
+          <p className="section-subtitle">Get answers to common questions</p>
+          
+          <div className="faq-preview-items">
+            {popularFaqs.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              
+              return (
+                <div key={index} className={`faq-preview-item ${isOpen ? 'open' : ''}`}>
+                  <button
+                    className="faq-preview-question"
+                    onClick={() => toggleFaq(index)}
+                  >
+                    <span>{faq.q}</span>
+                    <span className="faq-preview-toggle">{isOpen ? '−' : '+'}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="faq-preview-answer">
+                      <p>{faq.a}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="faq-preview-cta">
+            <Link to="/faq" className="btn-secondary">
+              View All FAQ
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="cta-section">
         <div className="container">
@@ -227,6 +295,7 @@ function HomePage() {
             <div className="footer-section">
               <h4>Support</h4>
               <ul>
+                <li><Link to="/faq">FAQ</Link></li>
                 <li><a href="/docs">Documentation</a></li>
                 <li><a href="/contact">Contact</a></li>
                 <li><a href="/api">API</a></li>

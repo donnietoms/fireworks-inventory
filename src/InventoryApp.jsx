@@ -511,6 +511,9 @@ function InventoryApp() {
           <button onClick={() => navigate('/')} className="btn-logout" title="Return to homepage">
             Home
           </button>
+          <button onClick={() => navigate('/faq')} className="btn-logout" title="View FAQ and help documentation">
+            Help
+          </button>
           <button onClick={() => navigate('/app/settings')} className="btn-logout" title="View your profile and account settings">
             Profile
           </button>

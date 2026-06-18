@@ -8,6 +8,7 @@ import { parseWisleyPDF } from './wisleyPdfParser.js';
 import { parseSpiritOf76PDF } from './spiritof76PdfParser.js';
 import { parseAmericanWholesalePDF } from './americanwholesalePdfParser.js';
 import { parseFireworksForeverPDF } from './fireworksForeverPdfParser.js';
+import { parseRKMPDF } from './rkmPdfParser.js';
 
 export async function parsePDF(pdfPath, vendorHint = null) {
   // Use vendor hint if provided, otherwise auto-detect
@@ -30,6 +31,9 @@ export async function parsePDF(pdfPath, vendorHint = null) {
     
     case 'fireworksforever':
       return await parseFireworksForeverPDF(pdfPath);
+    
+    case 'rkm':
+      return await parseRKMPDF(pdfPath);
     
     // Add more vendors here:
     // case 'other-vendor':
