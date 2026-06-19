@@ -432,17 +432,17 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
             </div>
 
             <div className="form-row">
-              <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
-                <button type="button" onClick={addItem} className="btn-add-item">
+              <div className="form-group" style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button type="button" onClick={addItem} className="btn-add-item" style={{ flex: '1' }}>
                   {editingItemIndex !== null ? '✓ Update Item' : '+ Add Item'}
                 </button>
                 {editingItemIndex !== null && (
-                  <button type="button" onClick={cancelEdit} className="btn-cancel">
+                  <button type="button" onClick={cancelEdit} className="btn-cancel" style={{ flex: '1' }}>
                     Cancel
                   </button>
                 )}
                 {editingOrder && (
-                  <button type="submit" className="btn-submit" style={{ marginLeft: 'auto' }}>
+                  <button type="submit" className="btn-submit" style={{ flex: '1' }}>
                     Update Order
                   </button>
                 )}
