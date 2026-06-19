@@ -155,7 +155,7 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
         <table className="inventory-list-table">
           <thead>
             <tr>
-              <th style={{width: '100px'}}>Part Number</th>
+              <th style={{width: '150px'}}>Part Number</th>
               <th>Description</th>
               <th style={{width: '80px'}}>Packing</th>
               <th style={{width: '100px'}}>Qty Ordered</th>

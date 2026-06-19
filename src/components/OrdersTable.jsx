@@ -151,6 +151,15 @@ const OrdersTable = ({ orders, inventory = [], onUpdate, onDelete, onEdit, onVie
                 const productCount = orderItems.length;
                 const totalQuantity = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
                 
+                // Debug: Log invoice file info
+                if (order.orderNumber) {
+                  console.log(`Order ${order.orderNumber}:`, {
+                    invoiceFile: order.invoiceFile,
+                    hasInvoiceFile: !!order.invoiceFile,
+                    orderKeys: Object.keys(order)
+                  });
+                }
+                
                 return (
                   <tr key={order.id}>
                     <td>{formatDate(order.orderDate)}</td>
