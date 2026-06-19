@@ -110,31 +110,31 @@ const OrdersTable = ({ orders, inventory = [], onUpdate, onDelete, onEdit, onVie
         <table className="orders-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('orderDate')} style={{ cursor: 'pointer' }}>
+              <th onClick={() => handleSort('orderDate')} style={{ cursor: 'pointer', width: '12%' }}>
                 Order Date <SortIcon field="orderDate" />
               </th>
-              <th onClick={() => handleSort('vendor')} style={{ cursor: 'pointer' }}>
+              <th onClick={() => handleSort('vendor')} style={{ cursor: 'pointer', width: '12%' }}>
                 Vendor <SortIcon field="vendor" />
               </th>
-              <th>
+              <th style={{ width: '12%' }}>
                 Order Number
               </th>
-              <th>
+              <th style={{ width: '10%' }}>
                 Product Count
               </th>
-              <th>
+              <th style={{ width: '10%' }}>
                 Total Quantity
               </th>
-              <th>
+              <th style={{ width: '10%' }}>
                 Subtotal
               </th>
-              <th>
+              <th style={{ width: '10%' }}>
                 Discount
               </th>
-              <th>
+              <th style={{ width: '10%' }}>
                 Total
               </th>
-              <th>Actions</th>
+              <th style={{ width: '14%' }}>Actions</th>
             </tr>
           </thead>
           <tbody>

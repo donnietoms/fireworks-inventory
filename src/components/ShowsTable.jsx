@@ -84,14 +84,14 @@ function ShowsTable({ shows, onDeleteShow, onViewDetails, onEdit, onResync }) {
         <table className="shows-table">
           <thead>
            <tr>
-             <th>Show Name</th>
-             <th onClick={() => handleSort('date')} className="sortable">
+             <th style={{ width: '25%' }}>Show Name</th>
+             <th onClick={() => handleSort('date')} className="sortable" style={{ width: '20%' }}>
                Show Date <SortIcon column="date" />
              </th>
-             <th>Total Items</th>
-             <th>Not in Inventory</th>
-             <th>Total Value</th>
-             <th>Actions</th>
+             <th style={{ width: '12%' }}>Total Items</th>
+             <th style={{ width: '15%' }}>Not in Inventory</th>
+             <th style={{ width: '12%' }}>Total Value</th>
+             <th style={{ width: '16%' }}>Actions</th>
            </tr>
          </thead>
           <tbody>

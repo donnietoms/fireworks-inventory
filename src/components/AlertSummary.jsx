@@ -71,13 +71,13 @@ export const AlertSummary = ({ inventory, onSetReorderPoint }) => {
         <table className="alert-table">
           <thead>
             <tr>
-              <th style={{ width: '20px' }}></th>
-              <th style={{ width: '90px' }}>Part #</th>
+              <th style={{ width: '3%' }}></th>
+              <th style={{ width: '12%' }}>Part #</th>
               <th>Description</th>
-              <th style={{ width: '70px' }}>Pack</th>
-              <th style={{ width: '70px' }}>Available</th>
-              <th style={{ width: '80px' }}>Reorder @</th>
-              <th style={{ width: '60px' }}></th>
+              <th style={{ width: '8%' }}>Pack</th>
+              <th style={{ width: '10%' }}>Available</th>
+              <th style={{ width: '10%' }}>Reorder @</th>
+              <th style={{ width: '7%' }}></th>
             </tr>
           </thead>
           <tbody>

@@ -155,13 +155,13 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
         <table className="inventory-list-table">
           <thead>
             <tr>
-              <th style={{width: '150px'}}>Part Number</th>
-              <th>Description</th>
-              <th style={{width: '80px'}}>Packing</th>
-              <th style={{width: '100px'}}>Qty Ordered</th>
-              <th style={{width: '100px'}}>Total Qty</th>
-              <th style={{width: '100px'}}>Avg Cost</th>
-              <th style={{width: '100px'}}>Total Value</th>
+              <th style={{width: '15%'}}>Part Number</th>
+              <th style={{width: '30%'}}>Description</th>
+              <th style={{width: '10%'}}>Packing</th>
+              <th style={{width: '10%'}}>Qty Ordered</th>
+              <th style={{width: '10%'}}>Total Qty</th>
+              <th style={{width: '12%'}}>Avg Cost</th>
+              <th style={{width: '13%'}}>Total Value</th>
             </tr>
           </thead>
           <tbody>

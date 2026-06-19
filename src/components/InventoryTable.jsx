@@ -105,22 +105,22 @@ const InventoryTable = ({ inventory, onUpdate, onDelete, onOrderClick }) => {
         <table className="inventory-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('partNumber')}>
+              <th onClick={() => handleSort('partNumber')} style={{ width: '15%' }}>
                 Part Number <SortIcon field="partNumber" />
               </th>
-              <th onClick={() => handleSort('description')}>
+              <th onClick={() => handleSort('description')} style={{ width: '35%' }}>
                 Description <SortIcon field="description" />
               </th>
-              <th onClick={() => handleSort('orderNumber')}>
+              <th onClick={() => handleSort('orderNumber')} style={{ width: '12%' }}>
                 Order # <SortIcon field="orderNumber" />
               </th>
-              <th onClick={() => handleSort('quantity')}>
+              <th onClick={() => handleSort('quantity')} style={{ width: '10%' }}>
                 Quantity <SortIcon field="quantity" />
               </th>
-              <th onClick={() => handleSort('cost')}>
+              <th onClick={() => handleSort('cost')} style={{ width: '10%' }}>
                 Cost <SortIcon field="cost" />
               </th>
-              <th>Actions</th>
+              <th style={{ width: '18%' }}>Actions</th>
             </tr>
           </thead>
           <tbody>

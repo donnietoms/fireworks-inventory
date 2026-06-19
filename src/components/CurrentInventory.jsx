@@ -345,19 +345,19 @@ function CurrentInventory({ inventory, shows, orders }) {
          <table className="current-inventory-table">
             <thead>
              <tr>
-               <th onClick={() => handleSort('partNumber')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+               <th onClick={() => handleSort('partNumber')} style={{ cursor: 'pointer', userSelect: 'none', width: '15%' }}>
                  Part Number {sortColumn === 'partNumber' && (sortDirection === 'asc' ? '▲' : '▼')}
                </th>
-               <th onClick={() => handleSort('description')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+               <th onClick={() => handleSort('description')} style={{ cursor: 'pointer', userSelect: 'none', width: '45%' }}>
                  Description {sortColumn === 'description' && (sortDirection === 'asc' ? '▲' : '▼')}
                </th>
-               <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+               <th onClick={() => handleSort('available')} style={{ cursor: 'pointer', userSelect: 'none', width: '12%' }}>
                  Available {sortColumn === 'available' && (sortDirection === 'asc' ? '▲' : '▼')}
                </th>
-                <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                <th onClick={() => handleSort('avgCost')} style={{ cursor: 'pointer', userSelect: 'none', width: '15%' }}>
                   Avg Cost/Unit {sortColumn === 'avgCost' && (sortDirection === 'asc' ? '▲' : '▼')}
                 </th>
-                <th>Links</th>
+                <th style={{ width: '13%' }}>Links</th>
              </tr>
              </thead>
             <tbody>

@@ -55,11 +55,11 @@ function ShowDetailsTable({ show, onBack }) {
         <table className="show-items-table">
           <thead>
             <tr>
-              <th>Part Number</th>
-              <th>Description</th>
-              <th>Quantity</th>
-              <th>Cost/Unit</th>
-              <th>Total</th>
+              <th style={{ width: '15%' }}>Part Number</th>
+              <th style={{ width: '40%' }}>Description</th>
+              <th style={{ width: '15%' }}>Quantity</th>
+              <th style={{ width: '15%' }}>Cost/Unit</th>
+              <th style={{ width: '15%' }}>Total</th>
             </tr>
           </thead>
           <tbody>

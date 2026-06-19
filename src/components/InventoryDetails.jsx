@@ -62,12 +62,12 @@ function InventoryDetails({ partNumber, inventory, orderNumber, onBack, onUpdate
         <table className="inventory-details-table">
           <thead>
             <tr>
-              {!orderNumber && <th>Order #</th>}
-              <th>Packing</th>
-              <th>Quantity</th>
-              <th>Cost/Unit</th>
-              <th>Line Value</th>
-              <th>Actions</th>
+              {!orderNumber && <th style={{ width: '15%' }}>Order #</th>}
+              <th style={{ width: '15%' }}>Packing</th>
+              <th style={{ width: '15%' }}>Quantity</th>
+              <th style={{ width: '15%' }}>Cost/Unit</th>
+              <th style={{ width: '15%' }}>Line Value</th>
+              <th style={{ width: orderNumber ? '40%' : '25%' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
