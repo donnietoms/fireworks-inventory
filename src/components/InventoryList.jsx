@@ -162,35 +162,18 @@ function InventoryList({ inventory, orderNumber, order, onViewDetails, onBack })
               <th style={{width: '100px'}}>Total Qty</th>
               <th style={{width: '100px'}}>Avg Cost</th>
               <th style={{width: '100px'}}>Total Value</th>
-              <th style={{width: '80px'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {summaryData.map((item, index) => (
               <tr key={index}>
-                <td>
-                  <button 
-                    className="link-button"
-                    onClick={() => onViewDetails(item.partNumber)}
-                  >
-                    {item.partNumber}
-                  </button>
-                </td>
+                <td>{item.partNumber}</td>
                 <td className="description-cell">{item.description}</td>
                 <td>{item.packing}</td>
                 <td>{item.totalCases}</td>
                 <td>{item.totalQuantity}</td>
                 <td>{formatCurrency(item.avgCost)}</td>
                 <td>{formatCurrency(item.totalValue)}</td>
-                <td>
-                  <button
-                    className="btn-view"
-                    onClick={() => onViewDetails(item.partNumber)}
-                    title="View Details"
-                  >
-                    📋
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
