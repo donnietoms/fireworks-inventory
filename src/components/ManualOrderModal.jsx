@@ -441,6 +441,11 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
                     Cancel
                   </button>
                 )}
+                {editingOrder && (
+                  <button type="submit" className="btn-submit" style={{ marginLeft: 'auto' }}>
+                    Update Order
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -650,14 +655,16 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
             </div>
           </div>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">
-              Cancel
-            </button>
-            <button type="submit" className="btn-submit">
-              {editingOrder ? 'Update Order' : 'Create Order'}
-            </button>
-          </div>
+          {!editingOrder && (
+            <div className="modal-actions">
+              <button type="button" onClick={onClose} className="btn-cancel">
+                Cancel
+              </button>
+              <button type="submit" className="btn-submit">
+                Create Order
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
