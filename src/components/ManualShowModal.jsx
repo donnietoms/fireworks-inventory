@@ -312,6 +312,11 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
                     Cancel
                   </button>
                 )}
+                {editingShow && (
+                  <button type="submit" className="btn-submit" style={{ marginLeft: 'auto' }}>
+                    Update Show
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -544,14 +549,16 @@ const ManualShowModal = ({ isOpen, onClose, onAdd, existingShows = [], editingSh
              </div>
            )}
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">
-              Cancel
-            </button>
-            <button type="submit" className="btn-submit">
-              {editingShow ? 'Update Show' : 'Create Show'}
-            </button>
-          </div>
+          {!editingShow && (
+            <div className="modal-actions">
+              <button type="button" onClick={onClose} className="btn-cancel">
+                Cancel
+              </button>
+              <button type="submit" className="btn-submit">
+                Create Show
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
