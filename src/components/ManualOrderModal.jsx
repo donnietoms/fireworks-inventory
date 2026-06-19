@@ -432,17 +432,31 @@ const ManualOrderModal = ({ isOpen, onClose, onAdd, existingOrders = [], editing
             </div>
 
             <div className="form-row">
-              <div className="form-group" style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                <button type="button" onClick={addItem} className="btn-add-item" style={{ flex: '1' }}>
+              <div className="form-group" style={{ display: 'flex', gap: '10px', width: '100%', flexDirection: 'row' }}>
+                <button 
+                  type="button" 
+                  onClick={addItem} 
+                  className="btn-add-item" 
+                  style={{ flex: '1', whiteSpace: 'nowrap', minWidth: '0' }}
+                >
                   {editingItemIndex !== null ? '✓ Update Item' : '+ Add Item'}
                 </button>
                 {editingItemIndex !== null && (
-                  <button type="button" onClick={cancelEdit} className="btn-cancel" style={{ flex: '1' }}>
+                  <button 
+                    type="button" 
+                    onClick={cancelEdit} 
+                    className="btn-cancel" 
+                    style={{ flex: '1', whiteSpace: 'nowrap', minWidth: '0', marginTop: '24px', padding: '10px 20px', fontSize: '14px', fontWeight: '500' }}
+                  >
                     Cancel
                   </button>
                 )}
                 {editingOrder && (
-                  <button type="submit" className="btn-submit" style={{ flex: '1' }}>
+                  <button 
+                    type="submit" 
+                    className="btn-submit" 
+                    style={{ flex: '1', whiteSpace: 'nowrap', minWidth: '0', marginTop: '24px', padding: '10px 20px', fontSize: '14px', fontWeight: '500', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  >
                     Update Order
                   </button>
                 )}
